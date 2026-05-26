@@ -4,27 +4,31 @@ public class EnemyBehavior : MonoBehaviour
 {
     [Header("Enemy Stats")]
     [SerializeField] private float moveSpeed = 3.5f; // Tốc độ chạy
+    [SerializeField] private int damageToServer = 10;
+    [SerializeField] private float damageInterval = 1f;
 
-    private Transform player;
+    private ServerCore server;
+    private float nextDamageTime;
 
     void Start()
     {
-        // 1. Tự động tìm Senior Developer trên bản đồ thông qua Tag "Player"
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject != null)
-        {
-            player = playerObject.transform;
-        }
+        // Tự động tìm Central Server trong scene.
+        server = FindFirstObjectByType<ServerCore>();
     }
 
     void Update()
     {
-        if (player != null)
+        if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
         {
-            // 2. Tính toán hướng đi từ Quái đến Player
-            Vector2 direction = (player.position - transform.position).normalized;
+            return;
+        }
 
-            // 3. Di chuyển quái vật đuổi theo
+        if (server != null)
+        {
+            // Tính hướng đi từ Enemy đến Server.
+            Vector2 direction = (server.transform.position - transform.position).normalized;
+
+            // Di chuyển enemy về phía Server.
             transform.Translate(direction * moveSpeed * Time.deltaTime);
         }
     }
@@ -37,6 +41,22 @@ public class EnemyBehavior : MonoBehaviour
         {
             Destroy(collision.gameObject); // Phá hủy viên đạn
             Destroy(gameObject);           // Phá hủy chính con quái này (Bug Fixed!)
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
+        {
+            return;
+        }
+
+        ServerCore touchedServer = collision.GetComponent<ServerCore>();
+
+        if (touchedServer != null && Time.time >= nextDamageTime)
+        {
+            touchedServer.TakeDamage(damageToServer);
+            nextDamageTime = Time.time + damageInterval;
         }
     }
 }
