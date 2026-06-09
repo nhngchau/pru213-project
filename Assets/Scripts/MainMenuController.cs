@@ -61,7 +61,7 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     public void StartGame()
     {
-        SceneManager.LoadScene("testscene");
+        SceneManager.LoadScene("GameScene");
     }
 
     public void QuitGame()
