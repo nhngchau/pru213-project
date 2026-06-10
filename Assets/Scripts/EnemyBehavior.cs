@@ -3,28 +3,30 @@
 public class EnemyBehavior : MonoBehaviour
 {
     [Header("Enemy Stats")]
-    [SerializeField] private float moveSpeed = 3.5f; // Tốc độ chạy
+    [SerializeField] private float moveSpeed = 3.5f;
+    [SerializeField] private int damageToServer = 10;
+    [SerializeField] private float damageInterval = 1f;
 
-    private Transform player;
+    private ServerCore server;
+    private float nextDamageTime;
+    private bool isAttackingServer = false;
 
     void Start()
     {
-        // 1. Tự động tìm Senior Developer trên bản đồ thông qua Tag "Player"
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject != null)
-        {
-            player = playerObject.transform;
-        }
+        server = FindFirstObjectByType<ServerCore>();
     }
+    
 
     void Update()
     {
-        if (player != null)
+        if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
         {
-            // 2. Tính toán hướng đi từ Quái đến Player
-            Vector2 direction = (player.position - transform.position).normalized;
+            return;
+        }
 
-            // 3. Di chuyển quái vật đuổi theo
+        if (server != null && !isAttackingServer)
+        {
+            Vector2 direction = (server.transform.position - transform.position).normalized;
             transform.Translate(direction * moveSpeed * Time.deltaTime);
         }
     }
@@ -35,8 +37,37 @@ public class EnemyBehavior : MonoBehaviour
         // Nếu chạm vào object có gắn tag "Bullet"
         if (collision.CompareTag("Bullet"))
         {
-            Destroy(collision.gameObject); // Phá hủy viên đạn
-            Destroy(gameObject);           // Phá hủy chính con quái này (Bug Fixed!)
+            Destroy(collision.gameObject);
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
+        {
+            return;
+        }
+
+        ServerCore touchedServer = collision.GetComponent<ServerCore>();
+
+        if (touchedServer != null)
+        {
+            isAttackingServer = true;
+
+            if (Time.time >= nextDamageTime)
+            {
+                touchedServer.TakeDamage(damageToServer);
+                nextDamageTime = Time.time + damageInterval;
+            }
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.GetComponent<ServerCore>() != null)
+        {
+            isAttackingServer = false;
         }
     }
 }

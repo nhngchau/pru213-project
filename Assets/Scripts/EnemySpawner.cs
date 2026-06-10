@@ -4,47 +4,47 @@ using UnityEngine;
 public class EnemySpawner : MonoBehaviour
 {
     [Header("Spawner Settings")]
-    [SerializeField] private GameObject syntaxErrorPrefab; // Kéo Prefab con quái vào đây
-    [SerializeField] private float spawnInterval = 2f;     // Cứ 2 giây sinh 1 con
-    [SerializeField] private float spawnRadius = 10f;      // Sinh ra cách nhân vật 10 mét
-
-    private Transform player;
+    [SerializeField] private GameObject syntaxErrorPrefab;
+    [SerializeField] private float spawnInterval = 2f;
+    [SerializeField] private Transform[] spawnPoints;
 
     void Start()
     {
-        // Tìm vị trí nhân vật
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null)
-        {
-            player = playerObj.transform;
-        }
-
-        // Bắt đầu tiến trình sinh quái chạy ngầm
         StartCoroutine(SpawnEnemyRoutine());
     }
 
     // Coroutine: Vòng lặp thời gian trong Unity
     IEnumerator SpawnEnemyRoutine()
     {
-        while (true) // Lặp vô hạn cho đến khi game over
+        while (true)
         {
-            yield return new WaitForSeconds(spawnInterval); // Tạm dừng 2 giây
+            yield return new WaitForSeconds(spawnInterval);
             SpawnEnemy();
         }
     }
 
     void SpawnEnemy()
     {
-        if (player != null)
+        if (syntaxErrorPrefab == null)
         {
-            // 1. Random.insideUnitCircle lấy 1 điểm ngẫu nhiên trên 1 vòng tròn
-            Vector2 randomDirection = Random.insideUnitCircle.normalized;
-
-            // 2. Tính toán tọa độ sinh quái xung quanh người chơi
-            Vector2 spawnPos = (Vector2)player.position + (randomDirection * spawnRadius);
-
-            // 3. Đưa quái vật vào bản đồ
-            Instantiate(syntaxErrorPrefab, spawnPos, Quaternion.identity);
+            Debug.LogWarning("EnemySpawner: Syntax Error Prefab is missing.");
+            return;
         }
+
+        if (spawnPoints == null || spawnPoints.Length == 0)
+        {
+            Debug.LogWarning("EnemySpawner: No spawn points assigned.");
+            return;
+        }
+
+        Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+
+        if (spawnPoint == null)
+        {
+            Debug.LogWarning("EnemySpawner: Selected spawn point is missing.");
+            return;
+        }
+
+        Instantiate(syntaxErrorPrefab, spawnPoint.position, spawnPoint.rotation);
     }
 }
