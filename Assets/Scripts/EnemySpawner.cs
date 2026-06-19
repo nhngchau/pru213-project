@@ -13,6 +13,7 @@ public class EnemySpawner : MonoBehaviour
         StartCoroutine(SpawnEnemyRoutine());
     }
 
+    // Coroutine: Vòng lặp thời gian trong Unity
     IEnumerator SpawnEnemyRoutine()
     {
         while (true)

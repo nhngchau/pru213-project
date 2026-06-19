@@ -3,7 +3,7 @@
 public class EnemyBehavior : MonoBehaviour
 {
     [Header("Enemy Stats")]
-    [SerializeField] private float moveSpeed = 3.5f;
+    [SerializeField] private float moveSpeed = 1.5f;
     [SerializeField] private int damageToServer = 10;
     [SerializeField] private float damageInterval = 1f;
 
@@ -15,6 +15,7 @@ public class EnemyBehavior : MonoBehaviour
     {
         server = FindFirstObjectByType<ServerCore>();
     }
+    
 
     void Update()
     {
@@ -30,8 +31,10 @@ public class EnemyBehavior : MonoBehaviour
         }
     }
 
+    // 4. Xử lý va chạm: Bị trúng đạn thì chết
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        // Nếu chạm vào object có gắn tag "Bullet"
         if (collision.CompareTag("Bullet"))
         {
             Destroy(collision.gameObject);
