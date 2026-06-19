@@ -3,7 +3,7 @@
 public class EnemyBehavior : MonoBehaviour
 {
     [Header("Enemy Stats")]
-    [SerializeField] private float moveSpeed = 3.5f;
+    [SerializeField] private float moveSpeed = 1.5f;
     [SerializeField] private int damageToServer = 10;
     [SerializeField] private float damageInterval = 1f;
 

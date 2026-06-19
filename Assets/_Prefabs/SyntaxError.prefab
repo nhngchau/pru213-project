@@ -169,6 +169,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f85faf15c2a226f478d12fe2c3ab808c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBehavior
-  moveSpeed: 3.5
+  moveSpeed: 2.5
   damageToServer: 10
   damageInterval: 1

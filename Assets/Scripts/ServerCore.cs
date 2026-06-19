@@ -4,7 +4,7 @@ using UnityEngine.UI;
 public class ServerCore : MonoBehaviour
 {
     [Header("Server Settings")]
-    [SerializeField] private int maxHP = 100;
+    [SerializeField] private int maxHP = 1000;
     [SerializeField] private Slider hpSlider;
 
     private int currentHP;
