@@ -14,13 +14,31 @@ public class EnemyBehavior : MonoBehaviour
 
     private int currentHP;
     private ServerCore server;
+    private Transform target;
     private float nextDamageTime;
     private bool isAttackingServer;
+
+    void Awake()
+    {
+        server = FindFirstObjectByType<ServerCore>();
+        // GDD AI: Bugs converge on the Server by default.
+        target = server != null ? server.transform : null;
+    }
 
     void Start()
     {
         currentHP = maxHP;
-        server = FindFirstObjectByType<ServerCore>();
+    }
+
+    void OnEnable()
+    {
+        // Decoupled: react to the player's death via the event hub, never via PlayerController.
+        PlayerEvents.OnPlayerDied += HandlePlayerDied;
+    }
+
+    void OnDisable()
+    {
+        PlayerEvents.OnPlayerDied -= HandlePlayerDied;
     }
 
     void Update()
@@ -30,10 +48,19 @@ public class EnemyBehavior : MonoBehaviour
             return;
         }
 
-        if (server != null && !isAttackingServer)
+        if (target != null && !isAttackingServer)
         {
-            Vector2 direction = (server.transform.position - transform.position).normalized;
+            Vector2 direction = (target.position - transform.position).normalized;
             transform.Translate(direction * moveSpeed * Time.deltaTime);
+        }
+    }
+
+    // GDD Section V: when the player goes down, every Bug commits 100% to the Server.
+    private void HandlePlayerDied()
+    {
+        if (server != null)
+        {
+            target = server.transform;
         }
     }
 
