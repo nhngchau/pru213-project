@@ -1,16 +1,33 @@
 using UnityEngine;
 
-public class EnemyBehavior : MonoBehaviour
+/// <summary>
+/// Shared behaviour + stat block for every Bug (GDD v3.0 - Section IV). One data-driven
+/// component: each prefab sets its own stats in the Inspector.
+///
+///   Bug          HP    Speed  Damage   DataPack  Special
+///   SyntaxError  20    4.0    10 HP/s  5         -
+///   LogicBug     40    3.0    15 HP/s  10        zigzag (separate upcoming task)
+///   MemoryLeak   150   1.5    30 HP/s  25        drops a Sludge pool on death
+///
+/// Implements IDamageable so Code Bullets can damage it without knowing its concrete type.
+/// Deals contact damage to any IDamageable it touches (Player or Server) via OnTriggerStay2D
+/// gated by a 1s timer -> exactly "HP per second", with no damage work done in Update().
+/// </summary>
+public class EnemyBehavior : MonoBehaviour, IDamageable
 {
-    // GDD v3.0 - Bug Type: Syntax Error (the only Bug currently in the project).
-    // HP 20 | Speed 4.0 | Damage 10 HP/s | Data Pack 5.
-    // Logic Bug / Memory Leak variants and behaviors are a separate upcoming task.
-    [Header("Enemy Stats (GDD v3.0 - Syntax Error)")]
+    [Header("Stats (GDD v3.0 - set per Bug type in the prefab)")]
     [SerializeField] private int maxHP = 20;
     [SerializeField] private float moveSpeed = 4.0f;
-    [SerializeField] private int damageToServer = 10;
-    [SerializeField] private float damageInterval = 1f;
     [SerializeField] private int dataPackValue = 5;
+
+    [Header("Contact Damage (HP/s)")]
+    [Tooltip("Damage per tick. With Tick Interval = 1s this is exactly HP/s (Syntax 10, Logic 15, Memory Leak 30).")]
+    [SerializeField] private int damagePerSecond = 10;
+    [SerializeField] private float damageTickInterval = 1f;
+
+    [Header("On Death (GDD v3.0 - Memory Leak only)")]
+    [Tooltip("Effect spawned when this Bug dies. Memory Leak assigns the Sludge prefab; others leave it empty.")]
+    [SerializeField] private GameObject onDeathEffectPrefab;
 
     private int currentHP;
     private ServerCore server;
@@ -64,8 +81,10 @@ public class EnemyBehavior : MonoBehaviour
         }
     }
 
-    // Damage is now applied by the Bullet (GDD base damage 10), not a one-shot kill.
-    // A 20 HP Syntax Error therefore requires 2 base hits, as specified by the GDD stats.
+    // --- IDamageable: taking damage from Code Bullets -------------------------
+
+    // Base bullet damage is 10 (GDD), so a 20 HP Syntax Error needs 2 hits and a 150 HP
+    // Memory Leak needs 15 - exactly as the stat table specifies. No more one-shot kills.
     public void TakeDamage(int amount)
     {
         currentHP -= amount;
@@ -78,35 +97,50 @@ public class EnemyBehavior : MonoBehaviour
 
     private void Die()
     {
-        // TODO (next task - Data Pack economy): award dataPackValue (5) on death.
+        // GDD v3.0 - Memory Leak special: leave a Sludge pool behind. Data-driven, so this
+        // class never needs to know it is "a Memory Leak" - it just drops whatever is assigned.
+        if (onDeathEffectPrefab != null)
+        {
+            Instantiate(onDeathEffectPrefab, transform.position, Quaternion.identity);
+        }
+
+        // TODO (next task - Data Pack economy): award dataPackValue (5 / 10 / 25) on death.
         // TODO (next task - Object Pooling): return this Bug to the pool instead of Destroy.
         Destroy(gameObject);
     }
 
-    private void OnTriggerStay2D(Collider2D collision)
+    // --- Dealing contact damage (HP/s) to Player or Server --------------------
+
+    private void OnTriggerStay2D(Collider2D other)
     {
         if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
         {
             return;
         }
 
-        ServerCore touchedServer = collision.GetComponent<ServerCore>();
+        // Decoupled + no friendly fire: hit any IDamageable that is not another Bug.
+        if (!other.TryGetComponent(out IDamageable damageable) || damageable is EnemyBehavior)
+        {
+            return;
+        }
 
-        if (touchedServer != null)
+        // Stop advancing once we are in contact with our goal, the Server.
+        if (damageable is ServerCore)
         {
             isAttackingServer = true;
+        }
 
-            if (Time.time >= nextDamageTime)
-            {
-                touchedServer.TakeDamage(damageToServer);
-                nextDamageTime = Time.time + damageInterval;
-            }
+        // Timer-gated tick = clean "HP per second" without applying damage every physics frame.
+        if (Time.time >= nextDamageTime)
+        {
+            damageable.TakeDamage(damagePerSecond);
+            nextDamageTime = Time.time + damageTickInterval;
         }
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    private void OnTriggerExit2D(Collider2D other)
     {
-        if (collision.GetComponent<ServerCore>() != null)
+        if (other.GetComponent<ServerCore>() != null)
         {
             isAttackingServer = false;
         }

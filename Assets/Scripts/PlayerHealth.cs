@@ -7,7 +7,7 @@ using UnityEngine;
 /// component only toggles them. All timing runs through Coroutines (never Update).
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerHealth : MonoBehaviour
+public class PlayerHealth : MonoBehaviour, IDamageable
 {
     [Header("Health (GDD v3.0)")]
     [SerializeField] private int maxHP = 100;
