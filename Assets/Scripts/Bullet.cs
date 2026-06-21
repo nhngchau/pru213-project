@@ -18,17 +18,20 @@ public class Bullet : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Enemy"))
+        // Code Bullets only ever damage Bugs (GDD v3.0). Decoupled: we hit any IDamageable
+        // tagged "Enemy" without knowing its concrete Bug type. The tag gate keeps bullets
+        // from ever damaging the Player or the Server.
+        if (!collision.CompareTag("Enemy"))
         {
-            EnemyBehavior enemy = collision.GetComponent<EnemyBehavior>();
-
-            if (enemy != null)
-            {
-                enemy.TakeDamage(damage);
-            }
-
-            // TODO (next task - Object Pooling): return to pool instead of Destroy.
-            Destroy(gameObject);
+            return;
         }
+
+        if (collision.TryGetComponent(out IDamageable target))
+        {
+            target.TakeDamage(damage);
+        }
+
+        // TODO (next task - Object Pooling): return to pool instead of Destroy.
+        Destroy(gameObject);
     }
 }

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ServerCore : MonoBehaviour
+public class ServerCore : MonoBehaviour, IDamageable
 {
     [Header("Server Settings")]
     [SerializeField] private int maxHP = 1000;
