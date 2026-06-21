@@ -1,11 +1,6 @@
 using UnityEngine;
 using TMPro;
 
-/// <summary>
-/// Displays the 5-second penalty countdown (GDD v3.0 - Section V). Listens to PlayerEvents and
-/// never references PlayerHealth directly. Lives on an always-active object (e.g. the Canvas) so
-/// it keeps receiving events; it only toggles the child text object's visibility.
-/// </summary>
 public class PenaltyUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text penaltyText;
