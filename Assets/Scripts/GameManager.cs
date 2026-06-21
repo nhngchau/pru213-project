@@ -5,7 +5,8 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("Build Progress")]
-    [SerializeField] private float buildDuration = 60f;
+    // GDD v3.0 - Win Condition: survive exactly 180s (3 min) for BUILD PROGRESS to reach 100%.
+    [SerializeField] private float buildDuration = 180f;
 
     [Header("Game Over UI")]
     [SerializeField] private GameObject gameOverPanel;
@@ -88,7 +89,8 @@ public class GameManager : MonoBehaviour
             gameOverPanel.SetActive(true);
         }
 
-        Debug.Log("Game Over!");
+        // GDD: Lose Condition shows the "System Crashed" panel (gameOverPanel).
+        Debug.Log("System Crashed! The central server has been destroyed.");
     }
 
     public void TriggerWin()
@@ -106,6 +108,8 @@ public class GameManager : MonoBehaviour
             winPanel.SetActive(true);
         }
 
+        // TODO (next task): GDD requires disabling all Spawners and remaining Bugs on win.
+        // Deferred until spawner/enemy registry wiring is added so it stays a single-purpose commit.
         Debug.Log("Build Complete! You Win!");
     }
 }

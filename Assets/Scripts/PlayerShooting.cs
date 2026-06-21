@@ -1,32 +1,38 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class PlayerShooting : MonoBehaviour
 {
     [Header("Weapon Settings")]
-    [SerializeField] private GameObject bulletPrefab; // Nơi nhét Prefab đạn vào
-    [SerializeField] private Transform firePoint;     // Vị trí nòng súng (nơi đạn bay ra)
+    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private Transform firePoint;
+
+    // GDD v3.0 - Left click is HOLD-to-fire continuously. Base Rate 0.5s/shot (Upgrade RAM floor 0.1s).
+    [Header("Fire Rate (GDD v3.0)")]
+    [SerializeField] private float fireRate = 0.5f;
+
+    private float nextFireTime;
 
     void Update()
     {
-        // Kiểm tra người chơi bấm Chuột Trái (Fire1)
-        if (Input.GetButtonDown("Fire1"))
+        // Hold-to-fire (GetButton), gated by the fire-rate cooldown.
+        if (Input.GetButton("Fire1") && Time.time >= nextFireTime)
         {
             Shoot();
+            nextFireTime = Time.time + fireRate;
         }
     }
 
     void Shoot()
     {
-        // 1. Lấy vị trí chuột trên màn hình, quy đổi ra tọa độ thế giới game
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-        // Tính toán hướng bay: Điểm đến (Chuột) trừ Điểm đi (Nhân vật)
         Vector2 lookDirection = mousePos - transform.position;
-
-        // Dùng lượng giác Atan2 để tính ra góc xoay (độ) cho viên đạn
         float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
 
-        // 2. Ép viên đạn sinh ra và xoay đúng góc đó
-        Instantiate(bulletPrefab, transform.position, Quaternion.Euler(0, 0, angle));
+        Vector3 spawnPosition = firePoint != null ? firePoint.position : transform.position;
+
+        // TODO (next task - Object Pooling): GDD mandates pooling. Replace Instantiate with a
+        // pool.Get(spawnPosition, rotation) call once the BulletPool is implemented.
+        Instantiate(bulletPrefab, spawnPosition, Quaternion.Euler(0, 0, angle));
     }
 }

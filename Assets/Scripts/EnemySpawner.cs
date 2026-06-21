@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
@@ -13,11 +13,16 @@ public class EnemySpawner : MonoBehaviour
         StartCoroutine(SpawnEnemyRoutine());
     }
 
-    // Coroutine: Vòng lặp thời gian trong Unity
     IEnumerator SpawnEnemyRoutine()
     {
         while (true)
         {
+            // Stop producing Bugs once the game has ended (win/lose), per GDD win cleanup intent.
+            if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
+            {
+                yield break;
+            }
+
             yield return new WaitForSeconds(spawnInterval);
             SpawnEnemy();
         }
@@ -45,6 +50,8 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
+        // TODO (next task - Object Pooling): GDD mandates pooling for enemy spawning.
+        // Replace Instantiate with pool.Get(spawnPoint.position, spawnPoint.rotation).
         Instantiate(syntaxErrorPrefab, spawnPoint.position, spawnPoint.rotation);
     }
 }

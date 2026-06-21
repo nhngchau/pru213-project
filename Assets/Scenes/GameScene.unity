@@ -3611,7 +3611,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f84a54b2a8ec4c04da64bb3c5f142970, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ServerCore
-  maxHP: 500
+  maxHP: 1000
   hpSlider: {fileID: 2106407737}
 --- !u!1 &1840601349
 GameObject:
