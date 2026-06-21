@@ -427,7 +427,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   syntaxErrorPrefab: {fileID: 5112933023753395360, guid: a2171b3c16bfe7041baa650f71f7f5c9, type: 3}
   spawnInterval: 2
-  spawnRadius: 10
+  spawnPoints: []
 --- !u!4 &563843701
 Transform:
   m_ObjectHideFlags: 0
