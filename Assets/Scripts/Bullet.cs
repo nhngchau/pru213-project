@@ -1,27 +1,34 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    [SerializeField] private float speed = 15f;
+    // GDD v3.0 - Projectile Speed 10.0 units/s | Base Damage 10 (Overclock CPU base).
+    [Header("Bullet Stats (GDD v3.0)")]
+    [SerializeField] private float speed = 10f;
+    [SerializeField] private int damage = 10;
 
     void Start()
     {
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
-        // Bắn thẳng về phía trước mặt của viên đạn
         rb.linearVelocity = transform.right * speed;
 
-        // Code chống "Memory Leak": Hủy viên đạn sau 2 giây nếu không trúng ai
-        // Giúp server (RAM của máy bạn) không bị quá tải bởi hàng ngàn viên đạn rác
+        // TODO (next task - Object Pooling): replace timed Destroy with a return-to-pool timer.
         Destroy(gameObject, 2f);
     }
 
-    // Phần này để dành cho Tuần 4 khi quái vật xuất hiện
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Enemy"))
         {
-            // Gây sát thương cho Enemy
-            Destroy(gameObject); // Chạm trúng thì viên đạn cũng biến mất
+            EnemyBehavior enemy = collision.GetComponent<EnemyBehavior>();
+
+            if (enemy != null)
+            {
+                enemy.TakeDamage(damage);
+            }
+
+            // TODO (next task - Object Pooling): return to pool instead of Destroy.
+            Destroy(gameObject);
         }
     }
 }
