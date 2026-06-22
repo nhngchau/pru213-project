@@ -40,6 +40,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     {
         CurrentHP = maxHP;
         server = FindFirstObjectByType<ServerCore>();
+        PlayerEvents.RaisePlayerHealthChanged(CurrentHP, maxHP);
     }
 
     public void TakeDamage(int amount)
@@ -55,10 +56,15 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         }
 
         CurrentHP -= amount;
-
         if (CurrentHP <= 0)
         {
             CurrentHP = 0;
+        }
+
+        PlayerEvents.RaisePlayerHealthChanged(CurrentHP, maxHP);
+
+        if (CurrentHP <= 0)
+        {
             EnterDowntime();
         }
     }
@@ -97,6 +103,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
         SetActiveState(true);
 
+        PlayerEvents.RaisePlayerHealthChanged(CurrentHP, maxHP);
         PlayerEvents.RaisePenaltyCountdown(0);
         PlayerEvents.RaisePlayerRespawned();
 

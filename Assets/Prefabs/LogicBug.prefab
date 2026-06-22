@@ -102,7 +102,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5112933023753395360}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -170,8 +170,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBehavior
   maxHP: 40
-  moveSpeed: 3
+  moveSpeed: 1.5
   dataPackValue: 10
+  detectionRadius: 4.5
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 8
+  bodyRadius: 0.3
+  lookAhead: 0.9
+  avoidAngleStep: 25
+  maxAvoidAngle: 100
   damagePerSecond: 15
   damageTickInterval: 1
   onDeathEffectPrefab: {fileID: 0}
