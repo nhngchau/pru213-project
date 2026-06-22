@@ -21,6 +21,7 @@ public static class UpgradeUIBuilder
     private static readonly Color BarFill = new Color(0.20f, 0.55f, 0.95f, 1f);   // build = blue (GDD)
     private static readonly Color BtnColor = new Color(0.22f, 0.45f, 0.30f, 1f);
     private static readonly Color SkipColor = new Color(0.45f, 0.22f, 0.22f, 1f);
+    private static readonly Color HpFill = new Color(0.30f, 0.85f, 0.35f, 1f);   // Player HP = green (GDD)
 
     [MenuItem("GDD Tools/Build Upgrade UI")]
     public static void Build()
@@ -110,6 +111,55 @@ public static class UpgradeUIBuilder
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         Debug.Log("[UpgradeUIBuilder] Built HUD + Upgrade Panel and wired GameHUD / UpgradePanelUI on the Canvas. Review and save (Ctrl+S).");
+    }
+
+    [MenuItem("GDD Tools/Add Player HP Bar")]
+    public static void AddPlayerHPBar()
+    {
+        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+        if (canvas == null)
+        {
+            Debug.LogError("[UpgradeUIBuilder] No Canvas in the open scene.");
+            return;
+        }
+
+        if (canvas.transform.Find("PlayerHPBar") != null)
+        {
+            Debug.LogWarning("[UpgradeUIBuilder] 'PlayerHPBar' already exists - delete it before rebuilding.");
+            return;
+        }
+
+        // Reuse the GameHUD already on the Canvas (from Build Upgrade UI), or add one if missing.
+        GameHUD hud = canvas.GetComponent<GameHUD>();
+        if (hud == null)
+        {
+            hud = Undo.AddComponent<GameHUD>(canvas.gameObject);
+        }
+
+        // GDD v3.0 - Section VII: Player HP bar, green, top-left.
+        RectTransform bar = CreateChild("PlayerHPBar", canvas.transform);
+        SetAnchored(bar, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(320f, 36f));
+        AddImage(bar.gameObject, BarBg, UiSprite);
+
+        RectTransform fill = CreateChild("Fill", bar);
+        Stretch(fill, 2f);
+        Image fillImg = AddImage(fill.gameObject, HpFill, UiSprite);
+        fillImg.type = Image.Type.Filled;
+        fillImg.fillMethod = Image.FillMethod.Horizontal;
+        fillImg.fillOrigin = (int)Image.OriginHorizontal.Left;
+        fillImg.fillAmount = 1f;
+
+        RectTransform labelRt = CreateChild("Label", bar);
+        Stretch(labelRt, 0f);
+        TextMeshProUGUI label = AddLabel(labelRt, "HP 100/100", 18f, Color.white, TextAlignmentOptions.Center);
+
+        SerializedObject hudSO = new SerializedObject(hud);
+        WireRef(hudSO, "playerHPFill", fillImg);
+        WireRef(hudSO, "playerHPLabel", label);
+        hudSO.ApplyModifiedProperties();
+
+        EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+        Debug.Log("[UpgradeUIBuilder] Built the top-left Player HP bar and wired it into GameHUD. Save the scene (Ctrl+S).");
     }
 
     // ------------------------------------------------------------ helpers
