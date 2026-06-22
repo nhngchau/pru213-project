@@ -7,8 +7,9 @@ public class PlayerShooting : MonoBehaviour
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private Transform firePoint;
 
-    [Header("Fire Rate (GDD v3.0)")]
-    [SerializeField] private float fireRate = 0.5f;
+    [Header("Weapon Stats (GDD v3.0 - tuned by UpgradeManager)")]
+    [SerializeField] private float fireRate = 0.5f;     // Upgrade RAM lowers this (floor 0.1)
+    [SerializeField] private int bulletDamage = 10;     // Overclock CPU raises this (+5 / level)
 
     [Header("Bullet Pool")]
     [SerializeField] private int defaultCapacity = 20;
@@ -19,8 +20,6 @@ public class PlayerShooting : MonoBehaviour
 
     void Awake()
     {
-        // Built-in Unity pool: createFunc builds a bullet, get/release toggle active state,
-        // destroy trims the surplus past maxPoolSize. collectionCheck catches double-release.
         bulletPool = new ObjectPool<Bullet>(
             createFunc: CreateBullet,
             actionOnGet: bullet => bullet.gameObject.SetActive(true),
@@ -34,9 +33,13 @@ public class PlayerShooting : MonoBehaviour
     private Bullet CreateBullet()
     {
         Bullet bullet = Instantiate(bulletPrefab).GetComponent<Bullet>();
-        bullet.SetPool(bulletPool); // bulletPool is already assigned by the time the first Get runs
+        bullet.SetPool(bulletPool);
         return bullet;
     }
+
+    // --- Upgrade hooks (GDD v3.0 - Section VI) -------------------------------
+    public void SetFireRate(float value) => fireRate = Mathf.Max(0.1f, value);
+    public void SetBulletDamage(int value) => bulletDamage = value;
 
     void Update()
     {
@@ -54,9 +57,9 @@ public class PlayerShooting : MonoBehaviour
         float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
         Vector3 spawnPosition = firePoint != null ? firePoint.position : transform.position;
 
-        // Pull from the pool instead of Instantiate, place it, then launch (resets velocity + lifetime).
         Bullet bullet = bulletPool.Get();
         bullet.transform.SetPositionAndRotation(spawnPosition, Quaternion.Euler(0f, 0f, angle));
+        bullet.SetDamage(bulletDamage); // apply the current (possibly upgraded) damage per shot
         bullet.Launch();
     }
 }

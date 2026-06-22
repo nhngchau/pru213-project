@@ -23,6 +23,12 @@ public class Bullet : MonoBehaviour
         pool = objectPool;
     }
 
+    /// <summary>Set per shot by PlayerShooting so Overclock CPU upgrades affect pooled bullets.</summary>
+    public void SetDamage(int value)
+    {
+        damage = value;
+    }
+
     /// <summary>
     /// OnGet state reset (GDD): called by PlayerShooting right after positioning. Fires the bullet
     /// and (re)starts its lifetime. Safe to call on every reuse - Start() no longer drives this.
