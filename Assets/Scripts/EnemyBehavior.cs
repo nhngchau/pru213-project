@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Pool;
 
 /// <summary>
 /// Shared behaviour + stat block for every Bug (GDD v3.0 - Section IV). One data-driven
@@ -10,8 +11,7 @@ using UnityEngine;
 ///   MemoryLeak   150   1.5    30 HP/s  25        drops a Sludge pool on death
 ///
 /// Implements IDamageable so Code Bullets can damage it without knowing its concrete type.
-/// Deals contact damage to any IDamageable it touches (Player or Server) via OnTriggerStay2D
-/// gated by a 1s timer -> exactly "HP per second", with no damage work done in Update().
+/// Pooled via EnemySpawner: it never destroys itself - on death it returns to its ObjectPool.
 /// </summary>
 public class EnemyBehavior : MonoBehaviour, IDamageable
 {
@@ -35,21 +35,51 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     private float nextDamageTime;
     private bool isAttackingServer;
 
+    private Rigidbody2D rb;
+    private IObjectPool<EnemyBehavior> pool;
+    private bool isReleased;
+
     void Awake()
     {
+        rb = GetComponent<Rigidbody2D>();
         server = FindFirstObjectByType<ServerCore>();
         // GDD AI: Bugs converge on the Server by default.
         target = server != null ? server.transform : null;
     }
 
+    /// <summary>Called once by the pool's createFunc so Die() can return this Bug to the right pool.</summary>
+    public void SetPool(IObjectPool<EnemyBehavior> objectPool)
+    {
+        pool = objectPool;
+    }
+
+    /// <summary>
+    /// OnGet state reset (GDD - CRITICAL): called by EnemySpawner after positioning. Restores HP,
+    /// clears velocity and AI flags so a recycled Bug behaves exactly like a freshly spawned one.
+    /// </summary>
+    public void ResetState()
+    {
+        isReleased = false;
+        currentHP = maxHP;
+        isAttackingServer = false;
+        nextDamageTime = 0f;
+        target = server != null ? server.transform : null;
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
+    }
+
     void Start()
     {
-        currentHP = maxHP;
+        currentHP = maxHP; // first-life init; every reuse goes through ResetState()
     }
 
     void OnEnable()
     {
-        // Decoupled: react to the player's death via the event hub, never via PlayerController.
+        // Subscribe on activate / unsubscribe on deactivate. Pool Get() reactivates and Release()
+        // deactivates, so these stay exactly balanced -> the Bug can never double-subscribe
+        // (this is what prevents the OnPlayerDied event "memory leak" across pooling).
         PlayerEvents.OnPlayerDied += HandlePlayerDied;
     }
 
@@ -84,7 +114,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     // --- IDamageable: taking damage from Code Bullets -------------------------
 
     // Base bullet damage is 10 (GDD), so a 20 HP Syntax Error needs 2 hits and a 150 HP
-    // Memory Leak needs 15 - exactly as the stat table specifies. No more one-shot kills.
+    // Memory Leak needs 15 - exactly as the stat table specifies.
     public void TakeDamage(int amount)
     {
         currentHP -= amount;
@@ -105,8 +135,28 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         }
 
         // TODO (next task - Data Pack economy): award dataPackValue (5 / 10 / 25) on death.
-        // TODO (next task - Object Pooling): return this Bug to the pool instead of Destroy.
-        Destroy(gameObject);
+        ReturnToPool();
+    }
+
+    // Guarded return path: isReleased blocks a double Release (e.g. two bullets landing in the
+    // same frame), which would otherwise trip ObjectPool collectionCheck.
+    private void ReturnToPool()
+    {
+        if (isReleased)
+        {
+            return;
+        }
+
+        isReleased = true;
+
+        if (pool != null)
+        {
+            pool.Release(this);
+        }
+        else
+        {
+            Destroy(gameObject); // fallback if a Bug was ever spawned without a pool
+        }
     }
 
     // --- Dealing contact damage (HP/s) to Player or Server --------------------
