@@ -134,7 +134,9 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             Instantiate(onDeathEffectPrefab, transform.position, Quaternion.identity);
         }
 
-        // TODO (next task - Data Pack economy): award dataPackValue (5 / 10 / 25) on death.
+        // GDD v3.0 - DataPack economy: reward the kill (5 / 10 / 25), decoupled via the event hub.
+        GameEvents.RaiseDataPackAwarded(dataPackValue);
+
         ReturnToPool();
     }
 

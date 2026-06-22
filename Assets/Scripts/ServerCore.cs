@@ -20,6 +20,19 @@ public class ServerCore : MonoBehaviour, IDamageable
         }
     }
 
+    // GDD v3.0 - Firewall System upgrade: serverMaxHP += 100; serverCurrentHP += 100;
+    public void IncreaseMaxHP(int amount)
+    {
+        maxHP += amount;
+        currentHP += amount;
+
+        if (hpSlider != null)
+        {
+            hpSlider.maxValue = maxHP;
+            hpSlider.value = currentHP;
+        }
+    }
+
     public void TakeDamage(int damage)
     {
         if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
