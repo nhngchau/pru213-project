@@ -564,10 +564,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 919006571}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.000030518, y: -0.0000076288}
-  m_SizeDelta: {x: 942.8, y: 454.6}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -0.000061035156, y: 0}
+  m_SizeDelta: {x: 8.799988, y: 2.600006}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &486970635
 MonoBehaviour:
@@ -1179,6 +1179,11 @@ MonoBehaviour:
   guidePanel: {fileID: 1179807474}
   hoverScale: 1.1
   animationSpeed: 10
+  backgroundMusic: {fileID: 0}
+  buttonHoverSound: {fileID: 0}
+  buttonClickSound: {fileID: 0}
+  musicVolume: 0.5
+  soundVolume: 0.8
 --- !u!4 &791474221
 Transform:
   m_ObjectHideFlags: 0
@@ -1262,7 +1267,7 @@ Canvas:
   m_GameObject: {fileID: 919006567}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
+  m_RenderMode: 1
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
