@@ -17,6 +17,11 @@ public class PlayerShooting : MonoBehaviour
 
     void Shoot()
     {
+        if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
+        {
+            return;
+        }
+
         // 1. Lấy vị trí chuột trên màn hình, quy đổi ra tọa độ thế giới game
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
@@ -28,5 +33,6 @@ public class PlayerShooting : MonoBehaviour
 
         // 2. Ép viên đạn sinh ra và xoay đúng góc đó
         Instantiate(bulletPrefab, transform.position, Quaternion.Euler(0, 0, angle));
+        GameAudioManager.Instance?.PlayShoot();
     }
 }

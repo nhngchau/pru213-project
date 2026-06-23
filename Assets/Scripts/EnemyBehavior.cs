@@ -34,6 +34,7 @@ public class EnemyBehavior : MonoBehaviour
     {
         if (collision.CompareTag("Bullet"))
         {
+            GameAudioManager.Instance?.PlayEnemyDefeated();
             Destroy(collision.gameObject);
             Destroy(gameObject);
         }

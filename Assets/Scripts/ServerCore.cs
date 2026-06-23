@@ -29,6 +29,8 @@ public class ServerCore : MonoBehaviour
 
         currentHP -= damage;
 
+        GameAudioManager.Instance?.PlayServerHit();
+
         if (currentHP < 0)
         {
             currentHP = 0;
