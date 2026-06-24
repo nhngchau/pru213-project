@@ -54,6 +54,8 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
     private ServerCore server;
     private Transform serverTransform;
     private Collider2D serverCollider;
+    private float serverAttackRadius = 1f;
+    private Vector2 serverAttackOffset;
     private PlayerHealth player;
     private Transform playerTransform;
     private Transform target;
@@ -74,6 +76,12 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         server = FindFirstObjectByType<ServerCore>();
         serverTransform = server != null ? server.transform : null;
         serverCollider = server != null ? server.GetComponent<Collider2D>() : null;
+        if (serverCollider != null)
+        {
+            // Radius of the ring around the Server that Bugs attack from (just inside its edge).
+            float extent = Mathf.Max(serverCollider.bounds.extents.x, serverCollider.bounds.extents.y);
+            serverAttackRadius = Mathf.Max(0.5f, extent * 0.85f);
+        }
 
         player = FindFirstObjectByType<PlayerHealth>();
         playerTransform = player != null ? player.transform : null;
@@ -97,6 +105,11 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         pathIndex = 0;
         lastPathTarget = null;
         nextRepathTime = 0f; // force a fresh path on the first Update after spawn
+
+        // Each Bug attacks the Server from its OWN random point on a ring around it, so they spread
+        // around the Server instead of all funnelling onto the single nearest cell of its centre.
+        float attackAngle = Random.value * Mathf.PI * 2f;
+        serverAttackOffset = new Vector2(Mathf.Cos(attackAngle), Mathf.Sin(attackAngle)) * serverAttackRadius;
 
         if (rb != null)
         {
@@ -172,7 +185,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         PathfindingGrid grid = PathfindingGrid.GetOrCreate();
         if (grid != null && grid.IsReady)
         {
-            grid.FindPath(transform.position, target.position, path);
+            grid.FindPath(transform.position, GoalPosition(), path);
         }
         // If no grid / no path, 'path' stays empty -> CurrentWaypoint() heads straight at the target.
     }
@@ -183,7 +196,18 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         {
             return path[pathIndex];
         }
-        return (Vector2)target.position; // final approach, or fallback when there is no path
+        return GoalPosition(); // final approach, or fallback when there is no path
+    }
+
+    // Where this Bug is actually heading: its own offset point on the ring around the Server (so Bugs
+    // surround it instead of stacking on one spot), or the Player's position when chasing the Player.
+    private Vector2 GoalPosition()
+    {
+        if (target == serverTransform && serverTransform != null)
+        {
+            return (Vector2)serverTransform.position + serverAttackOffset;
+        }
+        return target != null ? (Vector2)target.position : (Vector2)transform.position;
     }
 
     // Kinematic "collide & slide" close-range safety: stops at a surface and slides along it, so the
