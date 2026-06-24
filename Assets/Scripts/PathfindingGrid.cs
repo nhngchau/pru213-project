@@ -38,6 +38,37 @@ public class PathfindingGrid : MonoBehaviour
             return;
         }
         Instance = this;
+
+        // Self-heal: if placed without an obstacle layer (or auto-created), default to "Environment"
+        // so pathfinding keeps working even if a scene merge drops the Inspector value.
+        if (obstacleMask.value == 0)
+        {
+            obstacleMask = LayerMask.GetMask("Environment");
+        }
+    }
+
+    /// <summary>
+    /// Returns the grid, finding or creating one if the scene is missing it (e.g. a merge dropped the
+    /// PathfindingGrid object). An auto-created grid uses default settings + the "Environment" layer.
+    /// </summary>
+    public static PathfindingGrid GetOrCreate()
+    {
+        if (Instance != null)
+        {
+            return Instance;
+        }
+
+        PathfindingGrid existing = FindFirstObjectByType<PathfindingGrid>();
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        PathfindingGrid created = new GameObject("PathfindingGrid (auto)").AddComponent<PathfindingGrid>();
+        created.Bake();
+        Debug.LogWarning("[PathfindingGrid] None found in the scene - created one automatically. " +
+                         "Add a PathfindingGrid object to GameScene to tune it in the Inspector.");
+        return created;
     }
 
     void Start()

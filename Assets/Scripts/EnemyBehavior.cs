@@ -53,6 +53,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
 
     private ServerCore server;
     private Transform serverTransform;
+    private Collider2D serverCollider;
     private PlayerHealth player;
     private Transform playerTransform;
     private Transform target;
@@ -72,6 +73,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
 
         server = FindFirstObjectByType<ServerCore>();
         serverTransform = server != null ? server.transform : null;
+        serverCollider = server != null ? server.GetComponent<Collider2D>() : null;
 
         player = FindFirstObjectByType<PlayerHealth>();
         playerTransform = player != null ? player.transform : null;
@@ -167,7 +169,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         path.Clear();
         pathIndex = 0;
 
-        PathfindingGrid grid = PathfindingGrid.Instance;
+        PathfindingGrid grid = PathfindingGrid.GetOrCreate();
         if (grid != null && grid.IsReady)
         {
             grid.FindPath(transform.position, target.position, path);
@@ -202,6 +204,14 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         Vector2 dir = move / distance;
         RaycastHit2D hit = Physics2D.CircleCast(transform.position, bodyRadius, dir, distance + skinWidth, obstacleMask);
         if (hit.collider == null)
+        {
+            return move;
+        }
+
+        // The Server is a solid obstacle now (the Player can't pass through it, and Bugs route around it
+        // when chasing the Player). But when a Bug is actually TARGETING the Server, let it push straight
+        // in so it can reach + attack it (its trigger then fires OnTriggerStay2D -> damage, then freeze).
+        if (target == serverTransform && hit.collider == serverCollider)
         {
             return move;
         }
