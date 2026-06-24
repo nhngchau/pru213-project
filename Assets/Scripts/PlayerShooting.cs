@@ -40,6 +40,7 @@ public class PlayerShooting : MonoBehaviour
     // --- Upgrade hooks (GDD v3.0 - Section VI) -------------------------------
     public void SetFireRate(float value) => fireRate = Mathf.Max(0.1f, value);
     public void SetBulletDamage(int value) => bulletDamage = value;
+    public int BulletDamage => bulletDamage; // read by PlayerUltimate so its damage scales with upgrades
 
     void Update()
     {
