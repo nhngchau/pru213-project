@@ -52,14 +52,19 @@ public class PlayerShooting : MonoBehaviour
 
     void Shoot()
     {
+        // Aim the shot at the mouse cursor (screen -> world).
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 lookDirection = mousePos - transform.position;
         float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
         Vector3 spawnPosition = firePoint != null ? firePoint.position : transform.position;
 
+        // Pull a Code Bullet from the pool, place + aim it, then launch (resets velocity + lifetime).
         Bullet bullet = bulletPool.Get();
         bullet.transform.SetPositionAndRotation(spawnPosition, Quaternion.Euler(0f, 0f, angle));
         bullet.SetDamage(bulletDamage); // apply the current (possibly upgraded) damage per shot
         bullet.Launch();
+
+        // Audio: weapon fired.
+        GameAudioManager.Instance?.PlayShoot();
     }
 }

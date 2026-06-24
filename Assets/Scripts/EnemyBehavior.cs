@@ -251,6 +251,9 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         // GDD v3.0 - DataPack economy: reward the kill (5 / 10 / 25), decoupled via the event hub.
         GameEvents.RaiseDataPackAwarded(dataPackValue);
 
+        // Audio: a Bug was defeated (plays on every death, before it returns to the pool).
+        GameAudioManager.Instance?.PlayEnemyDefeated();
+
         ReturnToPool();
     }
 

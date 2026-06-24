@@ -53,6 +53,7 @@ public class GameManager : MonoBehaviour
         }
 
         IsGameOver = true;
+        GameAudioManager.Instance?.PlayGameOver();
         Time.timeScale = 0f;
 
         if (gameOverPanel != null)
@@ -72,6 +73,7 @@ public class GameManager : MonoBehaviour
         }
 
         IsGameWon = true;
+        GameAudioManager.Instance?.PlayWin();
         Time.timeScale = 0f;
 
         if (winPanel != null)
