@@ -23,8 +23,14 @@ public class PlayerUltimate : MonoBehaviour
     private PlayerShooting playerShooting;
     private PlayerHealth playerHealth;
     private bool onCooldown;
+    private float cooldownRemaining;
 
-    public bool IsOnCooldown => onCooldown; // handy for a future cooldown UI indicator
+    public bool IsOnCooldown => onCooldown;
+    public bool IsReady => !onCooldown;
+    public float CooldownRemaining => cooldownRemaining;        // seconds left (for the countdown number)
+    public float CooldownDuration => cooldown;
+    /// <summary>0 right after use -> 1 when fully recovered (used to brighten the cooldown box).</summary>
+    public float CooldownProgress => cooldown > 0f ? Mathf.Clamp01(1f - cooldownRemaining / cooldown) : 1f;
 
     void Awake()
     {
@@ -73,7 +79,13 @@ public class PlayerUltimate : MonoBehaviour
     private IEnumerator CooldownRoutine()
     {
         onCooldown = true;
-        yield return new WaitForSeconds(cooldown);
+        cooldownRemaining = cooldown;
+        while (cooldownRemaining > 0f)
+        {
+            cooldownRemaining -= Time.deltaTime; // GDD: cooldown managed by a Coroutine
+            yield return null;
+        }
+        cooldownRemaining = 0f;
         onCooldown = false;
     }
 }
