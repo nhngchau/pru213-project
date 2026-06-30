@@ -6,6 +6,9 @@ public class PlayerController : MonoBehaviour, ISlowable
     [Header("Player Settings")]
     [SerializeField] private float moveSpeed = 5f;
 
+    [Header("VFX")]
+    [SerializeField] private ParticleSystem moveDustParticle;
+
     private Rigidbody2D rb;
     private Vector2 movement;
     private Animator anim;
@@ -32,7 +35,22 @@ public class PlayerController : MonoBehaviour, ISlowable
 
         anim.SetFloat("Speed", movement.sqrMagnitude);
 
-        if (movement != Vector2.zero)
+        // --- Dust particle control ---
+        bool isMoving = movement != Vector2.zero;
+        if (moveDustParticle != null)
+        {
+            if (isMoving && !moveDustParticle.isPlaying)
+            {
+                moveDustParticle.Play();
+            }
+            else if (!isMoving && moveDustParticle.isPlaying)
+            {
+                moveDustParticle.Stop();
+            }
+        }
+
+        // Only update facing direction while moving (preserves last-facing direction when idle)
+        if (isMoving)
         {
             anim.SetFloat("Horizontal", movement.x);
             anim.SetFloat("Vertical", movement.y);

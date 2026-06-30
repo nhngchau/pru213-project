@@ -1,169 +1,93 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 
 public class EnemySpawner : MonoBehaviour
 {
-    // GDD v3.0 - one entry per Bug type. spawnWeight is RELATIVE: higher => spawns more often.
-    [System.Serializable]
-    public struct EnemySpawnConfig
-    {
-        public GameObject enemyPrefab;
-        [Min(0f)] public float spawnWeight;
-    }
+    [Header("Enemy Prefabs")]
+    [Tooltip("Add all enemy types here (e.g. SyntaxError, MemoryLeak, LogicBug). One is chosen at random per spawn.")]
+    [SerializeField] private GameObject[] enemyPrefabs;
 
-    [Header("Spawn Pool (GDD v3.0 - Weighted Random)")]
-    [Tooltip("Drag each Bug prefab here and set its spawnWeight. Relative ratio: SyntaxError (high) > LogicBug (mid) > MemoryLeak (low).")]
-    [SerializeField] private EnemySpawnConfig[] enemySpawnConfigs;
-
-    [Header("Spawner Settings")]
-    [SerializeField] private float spawnInterval = 2f;
+    [Header("Spawn Points")]
     [SerializeField] private Transform[] spawnPoints;
+    [SerializeField] private float spawnInterval = 2f;
 
-    [Header("Pool Settings")]
-    [SerializeField] private int defaultCapacity = 20;
-    [SerializeField] private int maxPoolSize = 200;
+    [Header("Group Spawn Settings")]
+    [SerializeField] private int minGroupSize = 3;
+    [SerializeField] private int maxGroupSize = 6;
+    [SerializeField] private float groupSpreadRadius = 0.6f;
 
-    // One ObjectPool per distinct Bug prefab (SyntaxError / LogicBug / MemoryLeak).
-    private readonly Dictionary<GameObject, IObjectPool<EnemyBehavior>> pools =
-        new Dictionary<GameObject, IObjectPool<EnemyBehavior>>();
-
-    void Awake()
-    {
-        BuildPools();
-    }
-
-    private void BuildPools()
-    {
-        foreach (EnemySpawnConfig config in enemySpawnConfigs)
-        {
-            GameObject prefab = config.enemyPrefab; // local copy -> captured correctly per pool
-            if (prefab == null || pools.ContainsKey(prefab))
-            {
-                continue;
-            }
-
-            IObjectPool<EnemyBehavior> pool = null;
-            pool = new ObjectPool<EnemyBehavior>(
-                createFunc: () =>
-                {
-                    EnemyBehavior enemy = Instantiate(prefab).GetComponent<EnemyBehavior>();
-                    enemy.SetPool(pool); // hand the Bug a reference to its own pool
-                    return enemy;
-                },
-                actionOnGet: enemy => enemy.gameObject.SetActive(true),
-                actionOnRelease: enemy => enemy.gameObject.SetActive(false),
-                actionOnDestroy: enemy => Destroy(enemy.gameObject),
-                collectionCheck: true,
-                defaultCapacity: defaultCapacity,
-                maxSize: maxPoolSize);
-
-            pools.Add(prefab, pool);
-        }
-    }
-
-    void Start()
+    private void Start()
     {
         StartCoroutine(SpawnEnemyRoutine());
     }
 
-    IEnumerator SpawnEnemyRoutine()
+    private IEnumerator SpawnEnemyRoutine()
     {
         while (true)
         {
-            // Stop producing Bugs once the game has ended (win/lose), per GDD win cleanup intent.
+            // Stop spawning when the game has already ended.
             if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
             {
                 yield break;
             }
 
             yield return new WaitForSeconds(spawnInterval);
-            SpawnEnemy();
+            SpawnEnemyGroup();
         }
     }
 
-    void SpawnEnemy()
+    private void SpawnEnemyGroup()
     {
+        // --- Guard checks ---------------------------------------------------
+        if (enemyPrefabs == null || enemyPrefabs.Length == 0)
+        {
+            Debug.LogWarning("EnemySpawner: No enemy prefabs assigned. Add at least one prefab to the Enemy Prefabs array.");
+            return;
+        }
+
         if (spawnPoints == null || spawnPoints.Length == 0)
         {
             Debug.LogWarning("EnemySpawner: No spawn points assigned.");
             return;
         }
 
-        GameObject prefab = PickWeightedEnemy();
-        if (prefab == null)
-        {
-            Debug.LogWarning("EnemySpawner: No valid enemy to spawn - check enemySpawnConfigs (prefab assigned? weight > 0?).");
-            return;
-        }
-
-        if (!pools.TryGetValue(prefab, out IObjectPool<EnemyBehavior> pool))
-        {
-            Debug.LogWarning($"EnemySpawner: No pool found for prefab '{prefab.name}'.");
-            return;
-        }
-
+        // --- Pick a random spawn point --------------------------------------
         Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
         if (spawnPoint == null)
         {
-            Debug.LogWarning("EnemySpawner: Selected spawn point is missing.");
+            Debug.LogWarning("EnemySpawner: Selected spawn point is null — check your Spawn Points array for missing references.");
             return;
         }
 
-        // Pull from the matching pool, place it, then reset its stats (OnGet state reset).
-        EnemyBehavior enemy = pool.Get();
-        enemy.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
-        enemy.ResetState();
-    }
+        // --- Determine group size -------------------------------------------
+        // Random.Range (int) is exclusive on max, so add 1 to include maxGroupSize.
+        int smallestGroup = Mathf.Min(minGroupSize, maxGroupSize);
+        int largestGroup  = Mathf.Max(minGroupSize, maxGroupSize);
+        int groupSize     = Random.Range(smallestGroup, largestGroup + 1);
 
-    // Roulette-wheel selection (GDD v3.0). O(n) over the configs, driven purely by the total
-    // weight - never builds a list of duplicated prefabs. Unchanged by the pooling refactor.
-    private GameObject PickWeightedEnemy()
-    {
-        if (enemySpawnConfigs == null || enemySpawnConfigs.Length == 0)
+        // --- Spawn each enemy in the group ----------------------------------
+        for (int i = 0; i < groupSize; i++)
         {
-            return null;
-        }
-
-        float totalWeight = 0f;
-        foreach (EnemySpawnConfig config in enemySpawnConfigs)
-        {
-            if (config.enemyPrefab != null && config.spawnWeight > 0f)
+            // Choose a random prefab from the array for every individual enemy.
+            GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+            if (prefab == null)
             {
-                totalWeight += config.spawnWeight;
-            }
-        }
-
-        if (totalWeight <= 0f)
-        {
-            return null;
-        }
-
-        float roll = Random.value * totalWeight;
-        foreach (EnemySpawnConfig config in enemySpawnConfigs)
-        {
-            if (config.enemyPrefab == null || config.spawnWeight <= 0f)
-            {
+                Debug.LogWarning($"EnemySpawner: Enemy prefab at index {i % enemyPrefabs.Length} is null — skipping.");
                 continue;
             }
 
-            if (roll < config.spawnWeight)
-            {
-                return config.enemyPrefab;
-            }
+            // Spread enemies in a circle around the chosen spawn point.
+            Vector2 spreadOffset = Random.insideUnitCircle * groupSpreadRadius;
+            Vector3 spawnPosition = spawnPoint.position + new Vector3(spreadOffset.x, spreadOffset.y, 0f);
 
-            roll -= config.spawnWeight;
-        }
+            GameObject enemyObject = Instantiate(prefab, spawnPosition, spawnPoint.rotation);
 
-        for (int i = enemySpawnConfigs.Length - 1; i >= 0; i--)
-        {
-            if (enemySpawnConfigs[i].enemyPrefab != null && enemySpawnConfigs[i].spawnWeight > 0f)
+            // Reset enemy state if the prefab uses EnemyBehavior (safe no-op otherwise).
+            EnemyBehavior enemy = enemyObject.GetComponent<EnemyBehavior>();
+            if (enemy != null)
             {
-                return enemySpawnConfigs[i].enemyPrefab;
+                enemy.ResetState();
             }
         }
-
-        return null;
     }
 }

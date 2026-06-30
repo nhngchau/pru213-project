@@ -1,11 +1,13 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerHealth : MonoBehaviour, IDamageable
 {
     [Header("Health (GDD v3.0)")]
     [SerializeField] private int maxHP = 100;
+    [SerializeField] private Slider hpSlider;
 
     [Header("Penalty / Respawn")]
     [SerializeField] private float penaltyDuration = 5f;
@@ -40,6 +42,13 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     {
         CurrentHP = maxHP;
         server = FindFirstObjectByType<ServerCore>();
+
+        if (hpSlider != null)
+        {
+            hpSlider.maxValue = maxHP;
+            hpSlider.value = CurrentHP;
+        }
+
         PlayerEvents.RaisePlayerHealthChanged(CurrentHP, maxHP);
     }
 
@@ -56,9 +65,11 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         }
 
         CurrentHP -= amount;
-        if (CurrentHP <= 0)
+        CurrentHP = Mathf.Clamp(CurrentHP, 0, maxHP);
+
+        if (hpSlider != null)
         {
-            CurrentHP = 0;
+            hpSlider.value = CurrentHP;
         }
 
         PlayerEvents.RaisePlayerHealthChanged(CurrentHP, maxHP);
@@ -100,6 +111,11 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
         CurrentHP = maxHP;
         IsDown = false;
+
+        if (hpSlider != null)
+        {
+            hpSlider.value = CurrentHP;
+        }
 
         SetActiveState(true);
 
