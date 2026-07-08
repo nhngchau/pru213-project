@@ -20,6 +20,10 @@ public class GameHUD : MonoBehaviour
     [Header("DataPack (top right)")]
     [SerializeField] private TMP_Text dataPackText;
 
+    [Header("EXP / Level (optional)")]
+    [SerializeField] private Image expFill;
+    [SerializeField] private TMP_Text expLabel;
+
     private int currentWave = 1;
     private float buildPercent;
 
@@ -28,6 +32,7 @@ public class GameHUD : MonoBehaviour
         GameEvents.OnBuildProgressChanged += HandleProgress;
         GameEvents.OnWaveStarted += HandleWaveStarted;
         GameEvents.OnDataPackChanged += HandleDataPack;
+        GameEvents.OnExpChanged += HandleExp;
         PlayerEvents.OnPlayerHealthChanged += HandlePlayerHP;
     }
 
@@ -36,6 +41,7 @@ public class GameHUD : MonoBehaviour
         GameEvents.OnBuildProgressChanged -= HandleProgress;
         GameEvents.OnWaveStarted -= HandleWaveStarted;
         GameEvents.OnDataPackChanged -= HandleDataPack;
+        GameEvents.OnExpChanged -= HandleExp;
         PlayerEvents.OnPlayerHealthChanged -= HandlePlayerHP;
     }
 
@@ -81,6 +87,19 @@ public class GameHUD : MonoBehaviour
         if (dataPackText != null)
         {
             dataPackText.text = $"DataPack: {total}";
+        }
+    }
+
+    private void HandleExp(int current, int required, int level)
+    {
+        if (expFill != null)
+        {
+            expFill.fillAmount = required > 0 ? (float)current / required : 0f;
+        }
+
+        if (expLabel != null)
+        {
+            expLabel.text = $"LV {level}  EXP {current}/{required}";
         }
     }
 }

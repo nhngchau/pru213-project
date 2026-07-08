@@ -1,17 +1,18 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityScreenNavigator.Runtime.Core.Modal;
 
-public class GameOverUI : MonoBehaviour
+public class GameOverUI : Modal
 {
     public void OnRestartClicked()
     {
+        RunProgress.ResetRun();
         Time.timeScale = 1f;
-        SceneManager.LoadScene("GameScene");
+        SceneTransition.LoadScene("GameScene");
     }
 
     public void OnMainMenuClicked()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene("MainMenuScene");
+        SceneTransition.LoadScene("MainMenuScene");
     }
 }

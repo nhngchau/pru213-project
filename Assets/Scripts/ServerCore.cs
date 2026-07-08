@@ -11,6 +11,7 @@ public class ServerCore : MonoBehaviour, IDamageable
 
     void Start()
     {
+        maxHP += RunProgress.ServerHpBonus;
         currentHP = maxHP;
 
         if (hpSlider != null)

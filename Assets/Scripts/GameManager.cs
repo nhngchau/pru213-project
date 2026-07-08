@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Game end-state owner (GDD v3.0): win / lose flags + their panels. The 180s Build Progress
+/// Game end-state owner (GDD v3.0): win / lose flags. The 180s Build Progress
 /// timeline now lives in WaveManager, which calls TriggerWin() on the final wave; ServerCore
 /// calls TriggerGameOver() when the Server dies.
 /// </summary>
@@ -55,8 +55,9 @@ public class GameManager : MonoBehaviour
         IsGameOver = true;
         GameAudioManager.Instance?.PlayGameOver();
         Time.timeScale = 0f;
+        GameEvents.RaiseGameOver();
 
-        if (gameOverPanel != null)
+        if (!GameUIManager.HasInstance && gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
         }
@@ -75,8 +76,9 @@ public class GameManager : MonoBehaviour
         IsGameWon = true;
         GameAudioManager.Instance?.PlayWin();
         Time.timeScale = 0f;
+        GameEvents.RaiseGameWon();
 
-        if (winPanel != null)
+        if (!GameUIManager.HasInstance && winPanel != null)
         {
             winPanel.SetActive(true);
         }

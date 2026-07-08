@@ -1,81 +1,114 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityScreenNavigator.Runtime.Core.Modal;
 
 /// <summary>
-/// UI for the between-wave Upgrade Panel (GDD v3.0 - Section VI). Pure presentation: it listens to
-/// GameEvents to show/refresh and calls UpgradeManager for queries/purchases. A button goes
-/// disabled (interactable = false) when the player cannot afford it or the track is maxed.
-/// Lives on the always-active Canvas; it toggles a separate panelRoot child.
+/// Level-up power-up panel. It shows three random runtime power-ups when the player gains a level.
 /// </summary>
-public class UpgradePanelUI : MonoBehaviour
+public class UpgradePanelUI : Modal
 {
     [Header("Root (the panel object this script toggles)")]
     [SerializeField] private GameObject panelRoot;
+    [SerializeField] private bool showOnLevelUpReady = true;
+    [SerializeField] private bool hideRootOnStart = true;
+    [SerializeField] private bool closeNavigatorModalOnContinue = true;
 
     [Header("Upgrade columns (order: CPU, RAM, Firewall)")]
     [SerializeField] private Button[] upgradeButtons = new Button[3];
+    [SerializeField] private TMP_Text[] titleTexts = new TMP_Text[3];
     [SerializeField] private TMP_Text[] descriptionTexts = new TMP_Text[3];
     [SerializeField] private TMP_Text[] costTexts = new TMP_Text[3];
 
     [Header("Continue")]
     [SerializeField] private Button continueButton;
 
-    // Column index -> upgrade track.
-    private static readonly UpgradeType[] Types =
-    {
-        UpgradeType.OverclockCPU, UpgradeType.UpgradeRAM, UpgradeType.Firewall
-    };
+    private readonly UpgradeType[] currentOptions = new UpgradeType[3];
+    private bool hasRolledOptions;
 
     void Awake()
     {
-        for (int i = 0; i < upgradeButtons.Length; i++)
+        for (int i = 0; i < currentOptions.Length; i++)
         {
             int index = i; // capture per button
-            if (upgradeButtons[i] != null)
+            Button button = GetItem(upgradeButtons, i);
+            if (button != null)
             {
-                upgradeButtons[i].onClick.AddListener(() => OnUpgradeClicked(index));
+                button.onClick.AddListener(() => OnUpgradeClicked(index));
             }
         }
 
         if (continueButton != null)
         {
-            continueButton.onClick.AddListener(OnContinueClicked);
+            continueButton.gameObject.SetActive(false);
         }
     }
 
     void OnEnable()
     {
-        GameEvents.OnWaveEnded += HandleWaveEnded;
-        GameEvents.OnDataPackChanged += HandleDataPackChanged;
-        GameEvents.OnUpgradePurchased += Refresh;
+        GameEvents.OnLevelUpReady += HandleLevelUpReady;
     }
 
     void OnDisable()
     {
-        GameEvents.OnWaveEnded -= HandleWaveEnded;
-        GameEvents.OnDataPackChanged -= HandleDataPackChanged;
-        GameEvents.OnUpgradePurchased -= Refresh;
+        GameEvents.OnLevelUpReady -= HandleLevelUpReady;
     }
 
     void Start()
     {
-        if (panelRoot != null)
+        if (panelRoot != null && hideRootOnStart)
         {
             panelRoot.SetActive(false); // hidden until a wave ends
         }
+
+        RollOptions();
+        Refresh();
     }
 
-    private void HandleWaveEnded(int wave)
+    public override void DidPushEnter()
     {
         if (panelRoot != null)
         {
             panelRoot.SetActive(true);
         }
+
+        RollOptions();
         Refresh();
     }
 
-    private void HandleDataPackChanged(int _) => Refresh();
+    private void HandleLevelUpReady(int level)
+    {
+        if (GameUIManager.UsesNavigatorUpgradeModal)
+        {
+            Refresh();
+            return;
+        }
+
+        if (panelRoot != null && showOnLevelUpReady)
+        {
+            panelRoot.SetActive(true);
+        }
+
+        RollOptions();
+        Refresh();
+    }
+
+    private void RollOptions()
+    {
+        UpgradeManager mgr = UpgradeManager.Instance;
+        if (mgr == null)
+        {
+            return;
+        }
+
+        UpgradeType[] options = mgr.GetRandomPowerUpOptions(currentOptions.Length);
+        for (int i = 0; i < currentOptions.Length; i++)
+        {
+            currentOptions[i] = options[i];
+        }
+
+        hasRolledOptions = true;
+    }
 
     private void Refresh()
     {
@@ -85,24 +118,38 @@ public class UpgradePanelUI : MonoBehaviour
             return;
         }
 
-        for (int i = 0; i < Types.Length; i++)
+        if (!hasRolledOptions)
         {
-            UpgradeType type = Types[i];
+            RollOptions();
+        }
 
-            if (descriptionTexts[i] != null)
+        for (int i = 0; i < currentOptions.Length; i++)
+        {
+            UpgradeType type = currentOptions[i];
+
+            TMP_Text titleText = GetItem(titleTexts, i);
+            TMP_Text descriptionText = GetItem(descriptionTexts, i);
+            TMP_Text costText = GetItem(costTexts, i);
+            Button upgradeButton = GetItem(upgradeButtons, i);
+
+            if (titleText != null)
             {
-                descriptionTexts[i].text = mgr.GetDescription(type);
+                titleText.text = mgr.GetTitle(type);
             }
 
-            if (costTexts[i] != null)
+            if (descriptionText != null)
             {
-                costTexts[i].text = mgr.IsMaxed(type) ? "-" : $"Cost: {mgr.GetCost(type)} DP";
+                descriptionText.text = mgr.GetDescription(type);
             }
 
-            if (upgradeButtons[i] != null)
+            if (costText != null)
             {
-                // GDD: not enough DataPack (or maxed) => not clickable.
-                upgradeButtons[i].interactable = mgr.CanAfford(type);
+                costText.text = mgr.IsMaxed(type) ? "MAX" : "LEVEL UP";
+            }
+
+            if (upgradeButton != null)
+            {
+                upgradeButton.interactable = mgr.CanChoose(type);
             }
         }
     }
@@ -110,15 +157,37 @@ public class UpgradePanelUI : MonoBehaviour
     private void OnUpgradeClicked(int index)
     {
         // Refresh is driven by OnUpgradePurchased / OnDataPackChanged.
-        UpgradeManager.Instance?.TryPurchase(Types[index]);
+        if (index < 0 || index >= currentOptions.Length)
+        {
+            return;
+        }
+
+        if (UpgradeManager.Instance != null && UpgradeManager.Instance.TryApplyPowerUp(currentOptions[index]))
+        {
+            hasRolledOptions = false;
+            ClosePanel();
+        }
     }
 
-    private void OnContinueClicked()
+    private void ClosePanel()
     {
+        if (closeNavigatorModalOnContinue)
+        {
+            ModalContainer container = ModalContainer.Of(transform);
+            if (container != null)
+            {
+                container.Pop(true);
+            }
+        }
+
         if (panelRoot != null)
         {
             panelRoot.SetActive(false);
         }
-        GameEvents.RaiseContinueRequested(); // WaveManager resumes + starts the next wave
+    }
+
+    private static T GetItem<T>(T[] items, int index) where T : class
+    {
+        return items != null && index >= 0 && index < items.Length ? items[index] : null;
     }
 }

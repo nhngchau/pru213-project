@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
@@ -81,7 +80,7 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     public void StartGame()
     {
-        SceneManager.LoadScene("GameScene");
+        SceneTransition.LoadScene("GameScene");
     }
 
     public void QuitGame()

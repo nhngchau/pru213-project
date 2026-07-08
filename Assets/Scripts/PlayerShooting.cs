@@ -3,6 +3,9 @@ using UnityEngine.Pool;
 
 public class PlayerShooting : MonoBehaviour
 {
+    [Header("Config")]
+    [SerializeField] private WeaponConfig weaponConfig;
+
     [Header("Weapon Settings")]
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private Transform firePoint;
@@ -12,6 +15,8 @@ public class PlayerShooting : MonoBehaviour
     [SerializeField] private int bulletDamage = 10;         // Damage per bullet. Overclock CPU raises this (+5 / level).
     [SerializeField] private int bulletsPerShot = 3;        // How many bullets fire at once (1 = single, 3 = tri-shot, 5 = penta-shot, …).
     [SerializeField] private float spreadAngle = 15f;       // Half-angle of the bullet fan in degrees. Bullets are spread evenly across [-spreadAngle, +spreadAngle].
+    [SerializeField] private int bulletBounces;
+    [SerializeField] private int bulletPierces;
 
     [Header("Recoil")]
     [SerializeField] private float recoilDistance = 0.08f;
@@ -27,6 +32,15 @@ public class PlayerShooting : MonoBehaviour
 
     void Awake()
     {
+        ApplyConfig();
+
+        if (bulletPrefab == null || !bulletPrefab.TryGetComponent(out Bullet _))
+        {
+            Debug.LogError("PlayerShooting: Bullet Prefab must be assigned and contain a Bullet component.");
+            enabled = false;
+            return;
+        }
+
         if (firePoint != null)
         {
             firePointStartLocalPosition = firePoint.localPosition;
@@ -52,7 +66,14 @@ public class PlayerShooting : MonoBehaviour
     // --- Upgrade hooks (GDD v3.0 - Section VI) -------------------------------
     public void SetFireRate(float value) => fireRate = Mathf.Max(0.1f, value);
     public void SetBulletDamage(int value) => bulletDamage = value;
+    public void SetBulletsPerShot(int value) => bulletsPerShot = Mathf.Max(1, value);
+    public void SetBulletBounces(int value) => bulletBounces = Mathf.Max(0, value);
+    public void SetBulletPierces(int value) => bulletPierces = Mathf.Max(0, value);
+    public float FireRate => fireRate;
     public int BulletDamage => bulletDamage; // read by PlayerUltimate so its damage scales with upgrades
+    public int BulletsPerShot => bulletsPerShot;
+    public int BulletBounces => bulletBounces;
+    public int BulletPierces => bulletPierces;
 
     void Update()
     {
@@ -67,6 +88,11 @@ public class PlayerShooting : MonoBehaviour
 
     void Shoot()
     {
+        if (Camera.main == null)
+        {
+            return;
+        }
+
         // Aim all bullets toward the mouse cursor (screen -> world).
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 lookDirection = mousePos - transform.position;
@@ -94,6 +120,7 @@ public class PlayerShooting : MonoBehaviour
             Bullet bullet = bulletPool.Get();
             bullet.transform.SetPositionAndRotation(spawnPosition, Quaternion.Euler(0f, 0f, finalAngle));
             bullet.SetDamage(bulletDamage);
+            bullet.SetModifiers(bulletBounces, bulletPierces);
             bullet.Launch();
         }
 
@@ -131,5 +158,34 @@ public class PlayerShooting : MonoBehaviour
             firePoint.localPosition,
             firePointStartLocalPosition,
             recoilReturnSpeed * Time.deltaTime);
+    }
+
+    private void ApplyConfig()
+    {
+        if (weaponConfig == null)
+        {
+            ApplyRunBoosters();
+            return;
+        }
+
+        fireRate = weaponConfig.fireRate;
+        bulletDamage = weaponConfig.bulletDamage;
+        bulletsPerShot = weaponConfig.bulletsPerShot;
+        spreadAngle = weaponConfig.spreadAngle;
+        bulletBounces = weaponConfig.bulletBounces;
+        bulletPierces = weaponConfig.bulletPierces;
+        recoilDistance = weaponConfig.recoilDistance;
+        recoilReturnSpeed = weaponConfig.recoilReturnSpeed;
+        defaultCapacity = weaponConfig.defaultCapacity;
+        maxPoolSize = weaponConfig.maxPoolSize;
+
+        ApplyRunBoosters();
+    }
+
+    private void ApplyRunBoosters()
+    {
+        bulletDamage += RunProgress.StarterDamageBonus;
+        fireRate = Mathf.Max(0.1f, fireRate - RunProgress.StarterFireRateReduction);
+        bulletsPerShot = Mathf.Max(1, bulletsPerShot + RunProgress.ExtraBulletsBonus);
     }
 }

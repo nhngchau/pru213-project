@@ -1,17 +1,27 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class WinUI : MonoBehaviour
 {
     public void OnRestartClicked()
     {
+        RunProgress.AdvanceStage();
         Time.timeScale = 1f;
-        SceneManager.LoadScene("GameScene");
+        SceneTransition.LoadScene("GameScene");
+    }
+
+    public void OnShopClicked()
+    {
+        GameUIManager.Instance?.ShowShop();
+    }
+
+    public void OnNextStageClicked()
+    {
+        OnRestartClicked();
     }
 
     public void OnMainMenuClicked()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene("MainMenuScene");
+        SceneTransition.LoadScene("MainMenuScene");
     }
 }
