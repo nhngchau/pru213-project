@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     public bool IsGameOver { get; private set; }
     public bool IsGameWon { get; private set; }
     public bool IsGameEnded => IsGameOver || IsGameWon;
+    public bool IsPaused { get; private set; }
 
     void Awake()
     {
@@ -84,5 +85,14 @@ public class GameManager : MonoBehaviour
         }
 
         Debug.Log("Build Complete! You Win!");
+    }
+
+    public void TogglePause()
+    {
+        if (IsGameEnded) return;
+
+        IsPaused = !IsPaused;
+        Time.timeScale = IsPaused ? 0f : 1f;
+        GameEvents.RaiseGamePaused(IsPaused);
     }
 }

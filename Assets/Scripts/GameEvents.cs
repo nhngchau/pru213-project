@@ -21,6 +21,12 @@ public static class GameEvents
     /// <summary>Player gained a level and should choose one power-up.</summary>
     public static event Action<int> OnLevelUpReady;
 
+    // --- Combat / Effects -----------------------------------------------
+    /// <summary>An enemy took damage; args = position, damage amount.</summary>
+    public static event Action<UnityEngine.Vector3, int> OnDamageTaken;
+    /// <summary>An enemy died; args = position.</summary>
+    public static event Action<UnityEngine.Vector3> OnEnemyDied;
+
     // --- Wave / Build Progress ------------------------------------------
     /// <summary>A new wave started; argument = wave number (1-based).</summary>
     public static event Action<int> OnWaveStarted;
@@ -40,6 +46,8 @@ public static class GameEvents
     public static event Action OnGameOver;
     /// <summary>Build Progress reached 100%; UI should show the win screen.</summary>
     public static event Action OnGameWon;
+    /// <summary>Game pause state toggled.</summary>
+    public static event Action<bool> OnGamePaused;
 
     public static void RaiseDataPackAwarded(int amount) => OnDataPackAwarded?.Invoke(amount);
     public static void RaiseDataPackChanged(int total) => OnDataPackChanged?.Invoke(total);
@@ -53,4 +61,8 @@ public static class GameEvents
     public static void RaiseContinueRequested() => OnContinueRequested?.Invoke();
     public static void RaiseGameOver() => OnGameOver?.Invoke();
     public static void RaiseGameWon() => OnGameWon?.Invoke();
+
+    public static void RaiseDamageTaken(UnityEngine.Vector3 pos, int damage) => OnDamageTaken?.Invoke(pos, damage);
+    public static void RaiseEnemyDied(UnityEngine.Vector3 pos) => OnEnemyDied?.Invoke(pos);
+    public static void RaiseGamePaused(bool isPaused) => OnGamePaused?.Invoke(isPaused);
 }

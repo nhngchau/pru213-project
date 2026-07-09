@@ -21,12 +21,14 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private string gameOverModalKey = "UI/Modals/GameOverModal";
     [SerializeField] private string winModalKey = "UI/Modals/WinModal";
     [SerializeField] private string shopModalKey = "UI/Modals/ShopModal";
+    [SerializeField] private string pauseModalKey = "UI/Modals/PauseModal";
 
     [Header("Legacy Panel Fallbacks")]
     [SerializeField] private GameObject upgradePanel;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject shopPanel;
+    [SerializeField] private GameObject pausePanel;
 
     private bool hasOpenModal;
 
@@ -56,6 +58,7 @@ public class GameUIManager : MonoBehaviour
         GameEvents.OnLevelUpReady += ShowLevelUp;
         GameEvents.OnGameOver += ShowGameOver;
         GameEvents.OnGameWon += ShowWin;
+        GameEvents.OnGamePaused += HandleGamePaused;
     }
 
     private void OnDisable()
@@ -63,6 +66,7 @@ public class GameUIManager : MonoBehaviour
         GameEvents.OnLevelUpReady -= ShowLevelUp;
         GameEvents.OnGameOver -= ShowGameOver;
         GameEvents.OnGameWon -= ShowWin;
+        GameEvents.OnGamePaused -= HandleGamePaused;
     }
 
     public void CloseTopModal()
@@ -94,6 +98,24 @@ public class GameUIManager : MonoBehaviour
     private void ShowWin()
     {
         ShowScreen(winModalKey, winPanel);
+    }
+
+    private void HandleGamePaused(bool isPaused)
+    {
+        if (isPaused)
+        {
+            ShowScreen(pauseModalKey, pausePanel);
+        }
+        else
+        {
+            // Close pause panel
+            if (pausePanel != null && pausePanel.activeSelf)
+            {
+                pausePanel.SetActive(false);
+            }
+            // If using Navigator, might need to close top modal if it's the pause modal
+            CloseTopModal();
+        }
     }
 
     private void ShowScreen(string resourceKey, GameObject fallbackPanel)
@@ -149,6 +171,11 @@ public class GameUIManager : MonoBehaviour
         if (shopPanel != null)
         {
             shopPanel.SetActive(false);
+        }
+
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(false);
         }
     }
 }

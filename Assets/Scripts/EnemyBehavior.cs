@@ -78,6 +78,10 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         if (isDead) return;
 
         currentHP -= Mathf.Max(0, damage);
+        
+        // --- ADDED: Raise damage taken event for EffectManager ---
+        GameEvents.RaiseDamageTaken(transform.position, damage);
+
         if (currentHP <= 0)
         {
             GameAudioManager.Instance?.PlayEnemyDefeated();
@@ -111,6 +115,9 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         {
             GameEvents.RaiseExpAwarded(config.expReward);
         }
+
+        // --- ADDED: Raise enemy died event for EffectManager ---
+        GameEvents.RaiseEnemyDied(transform.position);
 
         if (config.onDeathEffectPrefab != null)
         {
