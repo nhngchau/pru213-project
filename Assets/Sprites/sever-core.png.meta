@@ -1,17 +1,10 @@
 fileFormatVersion: 2
-guid: 84bee65edbfe8fe41b8b35fbbe9138b4
-AssetOrigin:
-  serializedVersion: 1
-  productId: 298577
-  packageName: Space Game GUI kit
-  packageVersion: 1.1
-  assetPath: Assets/Space_Exploration_GUI_Kit/Grid_Components/Large/selected-icon-container-large.png
-  uploadId: 937030
+guid: 88573ea6e349408478eb2508518b3ff3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7961330109193296670
-    second: slected-icon-container-large_0
+      213: -6827031580800754914
+    second: sever-core_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -133,23 +126,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: slected-icon-container-large_0
+      name: sever-core_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 2
-        width: 152
-        height: 148
+        y: 0
+        width: 153
+        height: 177
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 16, y: 16, z: 16, w: 16}
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2e469e5527ca38190800000000000000
-      internalID: -7961330109193296670
+      spriteID: e1b5ffbc2f28141a0800000000000000
+      internalID: -6827031580800754914
       vertices: []
       indices: 
       edges: []
@@ -158,7 +151,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -168,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      slected-icon-container-large_0: -7961330109193296670
+      sever-core_0: -6827031580800754914
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

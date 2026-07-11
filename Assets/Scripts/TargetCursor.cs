@@ -27,6 +27,7 @@ public class TargetCursor : MonoBehaviour
     [SerializeField] private float enemyScale = 0.05f;
 
     private Camera mainCamera;
+    private bool usingSystemCursor;
 
     private void Awake()
     {
@@ -44,13 +45,14 @@ public class TargetCursor : MonoBehaviour
     private void OnEnable()
     {
         // Hide the default operating-system cursor while this custom cursor is active.
-        Cursor.visible = false;
+        SetSystemCursor(false, true);
     }
 
     private void OnDisable()
     {
         // Show the default cursor again when this component is disabled.
         Cursor.visible = true;
+        usingSystemCursor = true;
     }
 
     private void OnDestroy()
@@ -61,6 +63,14 @@ public class TargetCursor : MonoBehaviour
 
     private void Update()
     {
+        bool shouldUseSystemCursor = ShouldUseSystemCursor();
+        SetSystemCursor(shouldUseSystemCursor);
+
+        if (shouldUseSystemCursor)
+        {
+            return;
+        }
+
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
@@ -110,5 +120,41 @@ public class TargetCursor : MonoBehaviour
 
         // Enemy objects in this project should use the "Enemy" tag.
         return hitCollider != null && hitCollider.CompareTag("Enemy");
+    }
+
+    private bool ShouldUseSystemCursor()
+    {
+        if (Time.timeScale == 0f)
+        {
+            return true;
+        }
+
+        if (PlayerProgression.Instance != null && PlayerProgression.Instance.WaitingForPowerUpChoice)
+        {
+            return true;
+        }
+
+        if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private void SetSystemCursor(bool enabled, bool force = false)
+    {
+        if (!force && usingSystemCursor == enabled)
+        {
+            return;
+        }
+
+        usingSystemCursor = enabled;
+        Cursor.visible = enabled;
+
+        if (cursorSprite != null)
+        {
+            cursorSprite.enabled = !enabled;
+        }
     }
 }

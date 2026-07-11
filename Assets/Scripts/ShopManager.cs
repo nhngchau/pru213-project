@@ -3,6 +3,7 @@ using UnityEngine;
 public class ShopManager : MonoBehaviour
 {
     public static ShopManager Instance { get; private set; }
+    private const int StarterFireRateMaxLevel = 20;
 
     private static readonly ShopBoosterType[] BoosterOrder =
     {
@@ -37,9 +38,11 @@ public class ShopManager : MonoBehaviour
     public string GetDescription(ShopBoosterType type) => type switch
     {
         ShopBoosterType.StarterDamage => $"+5 starting bullet damage. Lv {RunProgress.GetBoosterLevel(type)}",
-        ShopBoosterType.StarterFireRate => "-0.02s starting fire cooldown.",
-        ShopBoosterType.ServerArmor => "+150 starting server HP.",
-        ShopBoosterType.ExtraBullets => "+1 bullet per shot at stage start.",
+        ShopBoosterType.StarterFireRate => IsMaxed(type)
+            ? "Fire cooldown is already capped."
+            : $"-0.02s starting fire cooldown. Lv {RunProgress.GetBoosterLevel(type)} / {StarterFireRateMaxLevel}",
+        ShopBoosterType.ServerArmor => $"+150 starting server HP. Lv {RunProgress.GetBoosterLevel(type)}",
+        ShopBoosterType.ExtraBullets => $"+1 bullet per shot at stage start. Lv {RunProgress.GetBoosterLevel(type)}",
         _ => string.Empty,
     };
 
@@ -56,10 +59,21 @@ public class ShopManager : MonoBehaviour
         };
     }
 
-    public bool CanBuy(ShopBoosterType type) => RunProgress.DataPack >= GetCost(type);
+    public bool IsMaxed(ShopBoosterType type)
+    {
+        return type == ShopBoosterType.StarterFireRate
+            && RunProgress.GetBoosterLevel(type) >= StarterFireRateMaxLevel;
+    }
+
+    public bool CanBuy(ShopBoosterType type) => !IsMaxed(type) && RunProgress.DataPack >= GetCost(type);
 
     public bool TryBuy(ShopBoosterType type)
     {
+        if (IsMaxed(type))
+        {
+            return false;
+        }
+
         int cost = GetCost(type);
         if (!RunProgress.SpendDataPack(cost))
         {

@@ -6,6 +6,7 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
 {
     [Header("Guide Panel")]
     [SerializeField] private GameObject guidePanel;
+    [SerializeField] private Button continueButton;
 
     [Header("Button Hover Animation")]
     [SerializeField] private float hoverScale = 1.1f;
@@ -37,6 +38,8 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     private void Start()
     {
+        AutoBindContinueButton();
+
         if (guidePanel != null)
         {
             guidePanel.SetActive(false);
@@ -44,6 +47,7 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
 
         PlayBackgroundMusic();
         RegisterButtonSounds();
+        RefreshContinueState();
     }
 
     private void Update()
@@ -80,6 +84,23 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     public void StartGame()
     {
+        NewGame();
+    }
+
+    public void NewGame()
+    {
+        RunProgress.ResetRun();
+        SceneTransition.LoadScene("GameScene");
+    }
+
+    public void ContinueGame()
+    {
+        if (!RunProgress.LoadSavedRun())
+        {
+            RefreshContinueState();
+            return;
+        }
+
         SceneTransition.LoadScene("GameScene");
     }
 
@@ -134,6 +155,52 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
             hoverEntry.callback.AddListener(_ => PlayHoverSound());
             trigger.triggers.Add(hoverEntry);
         }
+    }
+
+    private void RefreshContinueState()
+    {
+        if (continueButton != null)
+        {
+            continueButton.interactable = RunProgress.HasSavedRun;
+        }
+    }
+
+    private void AutoBindContinueButton()
+    {
+        if (continueButton != null)
+        {
+            return;
+        }
+
+        Transform found = FindChildRecursive(transform.root, "ContinueButton");
+        if (found == null)
+        {
+            found = FindChildRecursive(transform.root, "Continue");
+        }
+
+        if (found != null)
+        {
+            continueButton = found.GetComponent<Button>();
+        }
+    }
+
+    private static Transform FindChildRecursive(Transform root, string childName)
+    {
+        foreach (Transform child in root)
+        {
+            if (child.name == childName)
+            {
+                return child;
+            }
+
+            Transform nested = FindChildRecursive(child, childName);
+            if (nested != null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
     }
 
     private void PlayHoverSound()

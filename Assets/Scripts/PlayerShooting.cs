@@ -13,7 +13,7 @@ public class PlayerShooting : MonoBehaviour
     [Header("Weapon Stats (GDD v3.0 - tuned by UpgradeManager)")]
     [SerializeField] private float fireRate = 0.15f;        // Fire cooldown in seconds. Upgrade RAM lowers this (floor 0.1).
     [SerializeField] private int bulletDamage = 10;         // Damage per bullet. Overclock CPU raises this (+5 / level).
-    [SerializeField] private int bulletsPerShot = 3;        // How many bullets fire at once (1 = single, 3 = tri-shot, 5 = penta-shot, …).
+    [SerializeField] private int bulletsPerShot = 1;        // How many bullets fire at once. Upgrades can raise this to multi-shot.
     [SerializeField] private float spreadAngle = 15f;       // Half-angle of the bullet fan in degrees. Bullets are spread evenly across [-spreadAngle, +spreadAngle].
     [SerializeField] private int bulletBounces;
     [SerializeField] private int bulletPierces;
@@ -101,13 +101,13 @@ public class PlayerShooting : MonoBehaviour
         Vector3 spawnPosition = firePoint != null ? firePoint.position : transform.position;
 
         // --- Multi-shot fan spread -----------------------------------------
-        // With bulletsPerShot = 1  → fires straight (no spread).
-        // With bulletsPerShot = N  → fires N bullets evenly across
-        //                            [-spreadAngle … +spreadAngle] relative to base aim.
+        // With bulletsPerShot = 1, fires straight with no spread.
+        // With bulletsPerShot = N, fires N bullets evenly across
+        // [-spreadAngle, +spreadAngle] relative to base aim.
         // Examples (spreadAngle = 15):
-        //   N=1 : 0°
-        //   N=3 : -15°, 0°, +15°
-        //   N=5 : -15°, -7.5°, 0°, +7.5°, +15°
+        //   N=1 : 0 degrees
+        //   N=3 : -15, 0, +15 degrees
+        //   N=5 : -15, -7.5, 0, +7.5, +15 degrees
         int count = Mathf.Max(1, bulletsPerShot);
         for (int i = 0; i < count; i++)
         {

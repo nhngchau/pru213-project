@@ -17,7 +17,7 @@ MonoBehaviour:
   damageToServer: 15
   damageToPlayer: 15
   damageInterval: 1
-  dataPackValue: 10
+  dataPackValue: 4
   expReward: 15
   deathDelay: 0.6
   onDeathEffectPrefab: {fileID: 677123861767867727, guid: d5e03cc7bdf651b4b84377689873ffa1, type: 3}

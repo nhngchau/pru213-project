@@ -12,10 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 330bc7d5592908f48ba97718fde29934, type: 3}
   m_Name: WeaponConfig
   m_EditorClassIdentifier: Assembly-CSharp::WeaponConfig
-  fireRate: 0.15
+  fireRate: 0.5
   bulletDamage: 10
-  bulletsPerShot: 3
+  bulletsPerShot: 1
   spreadAngle: 15
+  bulletBounces: 0
+  bulletPierces: 0
   recoilDistance: 0.08
   recoilReturnSpeed: 12
   defaultCapacity: 40

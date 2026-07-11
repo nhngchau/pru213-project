@@ -11,39 +11,66 @@ public class EnemySpawner : MonoBehaviour
 
     [Header("Spawn Points")]
     [SerializeField] private Transform[] spawnPoints;
-    [SerializeField] private float spawnInterval = 2f;
+    [SerializeField] private float spawnInterval = 1.8f;
 
     [Header("Group Spawn Settings")]
     [SerializeField] private int minGroupSize = 3;
-    [SerializeField] private int maxGroupSize = 6;
+    [SerializeField] private int maxGroupSize = 7;
     [SerializeField] private float groupSpreadRadius = 0.6f;
 
+    [Header("Build Progress Pressure")]
+    [Tooltip("Extra spawn speed applied as Build Progress approaches 100%. 2 means twice as fast near the end.")]
+    [SerializeField] private float endBuildSpawnRateMultiplier = 2.5f;
+    [Tooltip("Extra enemies added to each group when Build Progress reaches 100%.")]
+    [SerializeField] private int endBuildGroupBonus = 5;
+    [SerializeField] private float minRuntimeSpawnInterval = 0.22f;
+
     [Header("Enemy Pool")]
-    [SerializeField] private int defaultCapacityPerPrefab = 20;
-    [SerializeField] private int maxPoolSizePerPrefab = 120;
+    [SerializeField] private int defaultCapacityPerPrefab = 30;
+    [SerializeField] private int maxPoolSizePerPrefab = 160;
 
     private readonly Dictionary<GameObject, IObjectPool<EnemyBehavior>> enemyPools = new Dictionary<GameObject, IObjectPool<EnemyBehavior>>();
     private float runtimeSpawnInterval;
     private int runtimeMinGroupSize;
     private int runtimeMaxGroupSize;
+    private float buildProgress01;
 
     private void Awake()
     {
         BuildPools();
     }
 
+    private void OnEnable()
+    {
+        GameEvents.OnBuildProgressChanged += HandleBuildProgressChanged;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnBuildProgressChanged -= HandleBuildProgressChanged;
+    }
+
     private void Start()
     {
-        ApplyStageScaling();
+        ApplySpawnScaling();
         StartCoroutine(SpawnEnemyRoutine());
     }
 
-    private void ApplyStageScaling()
+    private void HandleBuildProgressChanged(float percent)
     {
-        float spawnMultiplier = Mathf.Max(1f, RunProgress.EnemySpawnRateMultiplier);
-        runtimeSpawnInterval = Mathf.Max(0.25f, spawnInterval / spawnMultiplier);
-        runtimeMinGroupSize = minGroupSize + Mathf.Max(0, RunProgress.Stage - 1);
-        runtimeMaxGroupSize = maxGroupSize + Mathf.Max(0, RunProgress.Stage - 1);
+        buildProgress01 = Mathf.Clamp01(percent / 100f);
+        ApplySpawnScaling();
+    }
+
+    private void ApplySpawnScaling()
+    {
+        float stageSpawnMultiplier = Mathf.Max(1f, RunProgress.EnemySpawnRateMultiplier);
+        float buildSpawnMultiplier = Mathf.Lerp(1f, Mathf.Max(1f, endBuildSpawnRateMultiplier), buildProgress01);
+        int buildGroupBonus = Mathf.RoundToInt(Mathf.Max(0, endBuildGroupBonus) * buildProgress01);
+
+        runtimeSpawnInterval = Mathf.Max(minRuntimeSpawnInterval, spawnInterval / (stageSpawnMultiplier * buildSpawnMultiplier));
+        runtimeMinGroupSize = minGroupSize + RunProgress.EnemyGroupBonus + buildGroupBonus;
+        runtimeMaxGroupSize = maxGroupSize + RunProgress.EnemyGroupBonus + buildGroupBonus;
     }
 
     private IEnumerator SpawnEnemyRoutine()

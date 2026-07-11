@@ -82,6 +82,12 @@ public class GameUIManager : MonoBehaviour
 
     public void ShowShop()
     {
+        if (!CanShowWithNavigator(shopModalKey) && shopPanel == null)
+        {
+            shopPanel = ShopPanelUI.CreateRuntimePanel(GetUiRoot());
+            shopPanel.SetActive(false);
+        }
+
         ShowScreen(shopModalKey, shopPanel);
     }
 
@@ -97,7 +103,7 @@ public class GameUIManager : MonoBehaviour
 
     private void ShowWin()
     {
-        ShowScreen(winModalKey, winPanel);
+        ShowShop();
     }
 
     private void HandleGamePaused(bool isPaused)
@@ -177,5 +183,16 @@ public class GameUIManager : MonoBehaviour
         {
             pausePanel.SetActive(false);
         }
+    }
+
+    private Transform GetUiRoot()
+    {
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas == null)
+        {
+            canvas = FindFirstObjectByType<Canvas>();
+        }
+
+        return canvas != null ? canvas.transform : transform;
     }
 }

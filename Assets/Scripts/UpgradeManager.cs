@@ -41,12 +41,6 @@ public class UpgradeManager : MonoBehaviour
     private int baseBulletBounces;
     private int baseBulletPierces;
 
-    private const int CpuMaxLevel = 3;
-    private const int RamMaxLevel = 3;
-    private const int DoubleShotMaxLevel = 2;
-    private const int RicochetMaxLevel = 2;
-    private const int PiercingBeamMaxLevel = 2;
-
     private int cpuLevel;
     private int ramLevel;
     private int firewallLevel;
@@ -103,12 +97,8 @@ public class UpgradeManager : MonoBehaviour
 
     public bool IsMaxed(UpgradeType type) => type switch
     {
-        UpgradeType.OverclockCPU => cpuLevel >= CpuMaxLevel,
-        UpgradeType.UpgradeRAM => ramLevel >= RamMaxLevel,
-        UpgradeType.DoubleShot => doubleShotLevel >= DoubleShotMaxLevel,
-        UpgradeType.Ricochet => ricochetLevel >= RicochetMaxLevel,
-        UpgradeType.PiercingBeam => piercingBeamLevel >= PiercingBeamMaxLevel,
-        _ => false, // Firewall is repeatable
+        UpgradeType.UpgradeRAM => Mathf.Approximately(GetCurrentFireRate(), minFireRate),
+        _ => false,
     };
 
     public bool CanChoose(UpgradeType type) => !IsMaxed(type);

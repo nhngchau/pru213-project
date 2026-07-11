@@ -22,7 +22,22 @@ public class PlayerProgression : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void EnsureInGameScene()
     {
-        if (Instance != null || SceneManager.GetActiveScene().name != "GameScene")
+        EnsureExistsForCurrentScene();
+    }
+
+    public static void EnsureExistsForCurrentScene()
+    {
+        if (SceneManager.GetActiveScene().name != "GameScene")
+        {
+            return;
+        }
+
+        if (Instance == null)
+        {
+            Instance = FindFirstObjectByType<PlayerProgression>();
+        }
+
+        if (Instance != null)
         {
             return;
         }
@@ -40,6 +55,14 @@ public class PlayerProgression : MonoBehaviour
         }
 
         Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     private void OnEnable()
@@ -69,6 +92,7 @@ public class PlayerProgression : MonoBehaviour
         }
 
         currentExp += amount;
+        Debug.Log($"PlayerProgression: +{amount} EXP ({currentExp}/{RequiredExp})");
 
         if (waitingForPowerUpChoice)
         {
@@ -83,6 +107,7 @@ public class PlayerProgression : MonoBehaviour
             waitingForPowerUpChoice = true;
             Time.timeScale = 0f;
             RaiseExpChanged();
+            Debug.Log($"PlayerProgression: Level up to {level}");
             GameEvents.RaiseLevelUpReady(level);
             return;
         }

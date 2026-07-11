@@ -19,6 +19,8 @@ public class ServerCore : MonoBehaviour, IDamageable
             hpSlider.maxValue = maxHP;
             hpSlider.value = currentHP;
         }
+
+        RaiseHealthChanged();
     }
 
     // GDD v3.0 - Firewall System upgrade: serverMaxHP += 100; serverCurrentHP += 100;
@@ -32,6 +34,8 @@ public class ServerCore : MonoBehaviour, IDamageable
             hpSlider.maxValue = maxHP;
             hpSlider.value = currentHP;
         }
+
+        RaiseHealthChanged();
     }
 
     public void TakeDamage(int damage)
@@ -55,6 +59,8 @@ public class ServerCore : MonoBehaviour, IDamageable
             hpSlider.value = currentHP;
         }
 
+        RaiseHealthChanged();
+
         Debug.Log("Server HP: " + currentHP + "/" + maxHP);
 
         if (currentHP <= 0)
@@ -69,5 +75,10 @@ public class ServerCore : MonoBehaviour, IDamageable
                 Time.timeScale = 0f;
             }
         }
+    }
+
+    private void RaiseHealthChanged()
+    {
+        GameEvents.RaiseServerHealthChanged(currentHP, maxHP);
     }
 }

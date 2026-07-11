@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHP: 20
   moveSpeed: 1
-  damageToServer: 30
+  damageToServer: 20
   damageToPlayer: 20
   damageInterval: 1
-  dataPackValue: 25
+  dataPackValue: 8
   expReward: 30
   deathDelay: 0.6
   onDeathEffectPrefab: {fileID: 677123861767867727, guid: d5e03cc7bdf651b4b84377689873ffa1, type: 3}

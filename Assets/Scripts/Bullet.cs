@@ -71,6 +71,12 @@ public class Bullet : MonoBehaviour
             target.TakeDamage(damage);
         }
 
+        if (remainingBounces > 0)
+        {
+            Reflect(collision);
+            return;
+        }
+
         if (remainingPierces > 0)
         {
             remainingPierces--;

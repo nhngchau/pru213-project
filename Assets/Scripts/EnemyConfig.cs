@@ -9,7 +9,7 @@ public class EnemyConfig : ScriptableObject
     [Min(0)] public int damageToServer = 10;
     [Min(0)] public int damageToPlayer = 10;
     [Min(0.05f)] public float damageInterval = 1f;
-    [Min(0)] public int dataPackValue = 5;
+    [Min(0)] public int dataPackValue = 2;
     [Min(0)] public int expReward = 10;
 
     [Header("Death")]

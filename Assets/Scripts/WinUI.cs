@@ -4,9 +4,7 @@ public class WinUI : MonoBehaviour
 {
     public void OnRestartClicked()
     {
-        RunProgress.AdvanceStage();
-        Time.timeScale = 1f;
-        SceneTransition.LoadScene("GameScene");
+        OnShopClicked();
     }
 
     public void OnShopClicked()
@@ -16,7 +14,7 @@ public class WinUI : MonoBehaviour
 
     public void OnNextStageClicked()
     {
-        OnRestartClicked();
+        OnShopClicked();
     }
 
     public void OnMainMenuClicked()

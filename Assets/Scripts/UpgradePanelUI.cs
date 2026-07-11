@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityScreenNavigator.Runtime.Core.Modal;
+using System;
 
 /// <summary>
 /// Level-up power-up panel. It shows three random runtime power-ups when the player gains a level.
@@ -14,20 +15,27 @@ public class UpgradePanelUI : Modal
     [SerializeField] private bool hideRootOnStart = true;
     [SerializeField] private bool closeNavigatorModalOnContinue = true;
 
-    [Header("Upgrade columns (order: CPU, RAM, Firewall)")]
+    [Header("Level Info")]
+    [SerializeField] private TMP_Text levelText;
+
+    [Header("Upgrade Choices")]
+    [SerializeField] private bool autoBindButtonTexts = true;
     [SerializeField] private Button[] upgradeButtons = new Button[3];
-    [SerializeField] private TMP_Text[] titleTexts = new TMP_Text[3];
+    [SerializeField] private TMP_Text[] titleTexts = new TMP_Text[3];       // upgrade name
     [SerializeField] private TMP_Text[] descriptionTexts = new TMP_Text[3];
-    [SerializeField] private TMP_Text[] costTexts = new TMP_Text[3];
+    [SerializeField] private TMP_Text[] costTexts = new TMP_Text[3];        // status text, now "LEVEL UP"
 
     [Header("Continue")]
     [SerializeField] private Button continueButton;
 
     private readonly UpgradeType[] currentOptions = new UpgradeType[3];
     private bool hasRolledOptions;
+    private int displayedLevel = 1;
 
     void Awake()
     {
+        AutoBindMissingTexts();
+
         for (int i = 0; i < currentOptions.Length; i++)
         {
             int index = i; // capture per button
@@ -67,6 +75,8 @@ public class UpgradePanelUI : Modal
 
     public override void DidPushEnter()
     {
+        displayedLevel = PlayerProgression.Instance != null ? PlayerProgression.Instance.Level : displayedLevel;
+
         if (panelRoot != null)
         {
             panelRoot.SetActive(true);
@@ -78,8 +88,11 @@ public class UpgradePanelUI : Modal
 
     private void HandleLevelUpReady(int level)
     {
+        displayedLevel = level;
+
         if (GameUIManager.UsesNavigatorUpgradeModal)
         {
+            RollOptions();
             Refresh();
             return;
         }
@@ -116,6 +129,11 @@ public class UpgradePanelUI : Modal
         if (mgr == null)
         {
             return;
+        }
+
+        if (levelText != null)
+        {
+            levelText.text = $"LEVEL {displayedLevel}";
         }
 
         if (!hasRolledOptions)
@@ -189,5 +207,98 @@ public class UpgradePanelUI : Modal
     private static T GetItem<T>(T[] items, int index) where T : class
     {
         return items != null && index >= 0 && index < items.Length ? items[index] : null;
+    }
+
+    private void AutoBindMissingTexts()
+    {
+        if (!autoBindButtonTexts)
+        {
+            return;
+        }
+
+        EnsureTextArraySizes();
+
+        for (int i = 0; i < currentOptions.Length; i++)
+        {
+            Button button = GetItem(upgradeButtons, i);
+            if (button == null)
+            {
+                continue;
+            }
+
+            if (titleTexts[i] == null)
+            {
+                titleTexts[i] = FindText(button.transform, "Title", "Name", "UpgradeName");
+            }
+
+            if (descriptionTexts[i] == null)
+            {
+                descriptionTexts[i] = FindText(button.transform, "Description", "Desc", "UpgradeDescription");
+            }
+
+            if (costTexts[i] == null)
+            {
+                costTexts[i] = FindText(button.transform, "Cost", "Status", "UpgradeStatus");
+            }
+        }
+
+        if (levelText == null)
+        {
+            levelText = FindText(transform, "LevelText", "LevelLabel", "CurrentLevelText");
+        }
+    }
+
+    private static TMP_Text FindText(Transform root, params string[] names)
+    {
+        foreach (string textName in names)
+        {
+            Transform found = FindChildRecursive(root, textName);
+            if (found != null && found.TryGetComponent(out TMP_Text text))
+            {
+                return text;
+            }
+        }
+
+        return null;
+    }
+
+    private void EnsureTextArraySizes()
+    {
+        EnsureArraySize(ref titleTexts, currentOptions.Length);
+        EnsureArraySize(ref descriptionTexts, currentOptions.Length);
+        EnsureArraySize(ref costTexts, currentOptions.Length);
+    }
+
+    private static void EnsureArraySize<T>(ref T[] array, int size)
+    {
+        if (array == null)
+        {
+            array = new T[size];
+            return;
+        }
+
+        if (array.Length < size)
+        {
+            Array.Resize(ref array, size);
+        }
+    }
+
+    private static Transform FindChildRecursive(Transform root, string childName)
+    {
+        foreach (Transform child in root)
+        {
+            if (child.name == childName)
+            {
+                return child;
+            }
+
+            Transform nested = FindChildRecursive(child, childName);
+            if (nested != null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
     }
 }

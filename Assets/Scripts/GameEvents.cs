@@ -8,7 +8,7 @@ using System;
 public static class GameEvents
 {
     // --- Economy ---------------------------------------------------------
-    /// <summary>A Bug was killed; argument = DataPack reward (GDD: 5 / 10 / 25).</summary>
+    /// <summary>A Bug was killed; argument = DataPack reward.</summary>
     public static event Action<int> OnDataPackAwarded;
     /// <summary>DataPack wallet changed; argument = new total (for the HUD).</summary>
     public static event Action<int> OnDataPackChanged;
@@ -26,6 +26,8 @@ public static class GameEvents
     public static event Action<UnityEngine.Vector3, int> OnDamageTaken;
     /// <summary>An enemy died; args = position.</summary>
     public static event Action<UnityEngine.Vector3> OnEnemyDied;
+    /// <summary>Server HP changed; args = current HP, max HP.</summary>
+    public static event Action<int, int> OnServerHealthChanged;
 
     // --- Wave / Build Progress ------------------------------------------
     /// <summary>A new wave started; argument = wave number (1-based).</summary>
@@ -64,5 +66,6 @@ public static class GameEvents
 
     public static void RaiseDamageTaken(UnityEngine.Vector3 pos, int damage) => OnDamageTaken?.Invoke(pos, damage);
     public static void RaiseEnemyDied(UnityEngine.Vector3 pos) => OnEnemyDied?.Invoke(pos);
+    public static void RaiseServerHealthChanged(int current, int max) => OnServerHealthChanged?.Invoke(current, max);
     public static void RaiseGamePaused(bool isPaused) => OnGamePaused?.Invoke(isPaused);
 }
