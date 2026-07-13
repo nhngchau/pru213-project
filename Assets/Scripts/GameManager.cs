@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Game end-state owner (GDD v3.0): win / lose flags. The 180s Build Progress
+/// Game end-state owner (GDD v3.0): win / lose flags. The Build Progress
 /// timeline now lives in WaveManager, which calls TriggerWin() on the final wave; ServerCore
 /// calls TriggerGameOver() when the Server dies.
 /// </summary>

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityScreenNavigator.Runtime.Core.Modal;
+using System.Collections;
 
 public class ShopPanelUI : Modal
 {
@@ -15,6 +16,8 @@ public class ShopPanelUI : Modal
     [SerializeField] private Button mainMenuButton;
 
     private ShopBoosterType[] boosters;
+    private Coroutine feedbackRoutine;
+    private bool isLeavingShop;
 
     public static GameObject CreateRuntimePanel(Transform parent)
     {
@@ -130,8 +133,11 @@ public class ShopPanelUI : Modal
 
             if (buyButtons[i] != null)
             {
-                buyButtons[i].interactable = ShopManager.Instance.CanBuy(booster);
+                buyButtons[i].interactable = !ShopManager.Instance.IsMaxed(booster);
                 SetButtonLabel(buyButtons[i], GetBuyButtonLabel(booster));
+                SetButtonColor(buyButtons[i], ShopManager.Instance.CanBuy(booster)
+                    ? new Color(0.13f, 0.42f, 0.9f, 1f)
+                    : new Color(0.42f, 0.44f, 0.5f, 1f));
             }
         }
     }
@@ -143,24 +149,73 @@ public class ShopPanelUI : Modal
             return;
         }
 
-        if (ShopManager.Instance.TryBuy(boosters[index]))
+        ShopBoosterType booster = boosters[index];
+        if (ShopManager.Instance.TryBuy(booster))
         {
             Refresh();
+            ShowButtonFeedback(index, "BOUGHT!", new Color(0.18f, 0.72f, 0.32f, 1f));
+            return;
         }
+
+        int missing = Mathf.Max(0, ShopManager.Instance.GetCost(booster) - RunProgress.DataPack);
+        string message = ShopManager.Instance.IsMaxed(booster) ? "MAX" : $"-{missing} DP";
+        ShowButtonFeedback(index, message, new Color(0.86f, 0.24f, 0.2f, 1f));
     }
 
     private void OnNextStageClicked()
     {
+        if (isLeavingShop)
+        {
+            return;
+        }
+
         RunProgress.AdvanceStage();
-        Time.timeScale = 1f;
-        SceneTransition.LoadScene("GameScene");
+        LeaveShopAndLoadScene("GameScene");
     }
 
     private void OnMainMenuClicked()
     {
+        if (isLeavingShop)
+        {
+            return;
+        }
+
         RunProgress.LoadSavedRun();
+        LeaveShopAndLoadScene("MainMenuScene");
+    }
+
+    private void LeaveShopAndLoadScene(string sceneName)
+    {
+        isLeavingShop = true;
         Time.timeScale = 1f;
-        SceneTransition.LoadScene("MainMenuScene");
+
+        SetShopButtonsInteractable(false);
+        ModalContainer container = ModalContainer.Of(transform, false);
+        SceneTransition.LoadSceneAfterClosingModal(sceneName, container);
+    }
+
+    private void SetShopButtonsInteractable(bool interactable)
+    {
+        if (buyButtons != null)
+        {
+            for (int i = 0; i < buyButtons.Length; i++)
+            {
+                if (buyButtons[i] != null)
+                {
+                    buyButtons[i].interactable = interactable;
+                }
+            }
+        }
+
+        if (nextStageButton != null)
+        {
+            nextStageButton.interactable = interactable;
+        }
+
+        if (mainMenuButton != null)
+        {
+            mainMenuButton.interactable = interactable;
+        }
     }
 
     private static void EnsureShopManager()
@@ -334,12 +389,45 @@ public class ShopPanelUI : Modal
         return ShopManager.Instance.CanBuy(booster) ? "BUY" : "NEED DP";
     }
 
+    private void ShowButtonFeedback(int index, string label, Color color)
+    {
+        if (index < 0 || buyButtons == null || index >= buyButtons.Length || buyButtons[index] == null)
+        {
+            return;
+        }
+
+        if (feedbackRoutine != null)
+        {
+            StopCoroutine(feedbackRoutine);
+        }
+
+        Button button = buyButtons[index];
+        SetButtonLabel(button, label);
+        SetButtonColor(button, color);
+        feedbackRoutine = StartCoroutine(ClearButtonFeedback());
+    }
+
+    private IEnumerator ClearButtonFeedback()
+    {
+        yield return new WaitForSecondsRealtime(0.6f);
+        feedbackRoutine = null;
+        Refresh();
+    }
+
     private static void SetButtonLabel(Button button, string label)
     {
         TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
         if (text != null)
         {
             text.text = label;
+        }
+    }
+
+    private static void SetButtonColor(Button button, Color color)
+    {
+        if (button.targetGraphic != null)
+        {
+            button.targetGraphic.color = color;
         }
     }
 

@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityScreenNavigator.Runtime.Core.Modal;
 
 public class SceneTransition : MonoBehaviour
 {
@@ -25,6 +26,11 @@ public class SceneTransition : MonoBehaviour
     public static void LoadScene(string sceneName, float fadeOutDuration, float fadeInDuration)
     {
         EnsureInstance().StartTransition(sceneName, fadeOutDuration, fadeInDuration);
+    }
+
+    public static void LoadSceneAfterClosingModal(string sceneName, ModalContainer modalContainer)
+    {
+        EnsureInstance().StartCoroutine(instance.CloseModalThenTransitionRoutine(sceneName, modalContainer));
     }
 
     private static SceneTransition EnsureInstance()
@@ -141,6 +147,37 @@ public class SceneTransition : MonoBehaviour
         canvasGroup.blocksRaycasts = false;
         canvasGroup.interactable = false;
         isTransitioning = false;
+    }
+
+    private IEnumerator CloseModalThenTransitionRoutine(string sceneName, ModalContainer modalContainer)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName) || isTransitioning)
+        {
+            yield break;
+        }
+
+        Time.timeScale = 1f;
+
+        if (modalContainer != null)
+        {
+            while (modalContainer != null && modalContainer.IsInTransition)
+            {
+                yield return null;
+            }
+
+            if (modalContainer != null && modalContainer.OrderedModalIds.Count > 0)
+            {
+                bool popComplete = false;
+                modalContainer.Pop(false).OnTerminate += () => popComplete = true;
+                while (modalContainer != null && !popComplete)
+                {
+                    yield return null;
+                }
+            }
+        }
+
+        yield return null;
+        StartTransition(sceneName);
     }
 
     private IEnumerator Fade(float from, float to, float duration)

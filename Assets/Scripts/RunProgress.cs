@@ -17,8 +17,7 @@ public static class RunProgress
     private const float FireRateReductionPerLevel = 0.02f;
     private const int ServerHpBonusPerLevel = 150;
     private const int ExtraBulletsPerLevel = 1;
-    private const float EnemyHealthGrowthPerStage = 0.25f;
-    private const float EnemySpawnGrowthPerStage = 0.25f;
+    private const float EnemySpawnGrowthPerStage = 0.12f;
 
     public static int Stage { get; private set; } = 1;
     public static int DataPack { get; private set; }
@@ -26,6 +25,12 @@ public static class RunProgress
     public static int StarterFireRateLevel { get; private set; }
     public static int ServerArmorLevel { get; private set; }
     public static int ExtraBulletsLevel { get; private set; }
+    public static int PowerUpCpuLevel { get; private set; }
+    public static int PowerUpRamLevel { get; private set; }
+    public static int PowerUpFirewallLevel { get; private set; }
+    public static int PowerUpDoubleShotLevel { get; private set; }
+    public static int PowerUpRicochetLevel { get; private set; }
+    public static int PowerUpPiercingBeamLevel { get; private set; }
     public static bool HasSavedRun => GetSaveData().HasSave;
 
     public static int StarterDamageBonus => StarterDamageLevel * DamageBonusPerLevel;
@@ -35,12 +40,18 @@ public static class RunProgress
 
     public static int NextStage => Stage + 1;
     public static float EnemyHealthMultiplier => GetEnemyHealthMultiplier(Stage);
+    public static float EnemyDamageMultiplier => GetEnemyDamageMultiplier(Stage);
     public static float EnemySpawnRateMultiplier => GetEnemySpawnRateMultiplier(Stage);
     public static int EnemyGroupBonus => GetEnemyGroupBonus(Stage);
 
     public static float GetEnemyHealthMultiplier(int stage)
     {
-        return 1f + Mathf.Max(0, stage - 1) * EnemyHealthGrowthPerStage;
+        return Mathf.Pow(2f, Mathf.Max(0, stage - 1));
+    }
+
+    public static float GetEnemyDamageMultiplier(int stage)
+    {
+        return Mathf.Pow(2f, Mathf.Max(0, stage - 1));
     }
 
     public static float GetEnemySpawnRateMultiplier(int stage)
@@ -50,12 +61,12 @@ public static class RunProgress
 
     public static int GetEnemyGroupBonus(int stage)
     {
-        return Mathf.FloorToInt(Mathf.Max(0, stage - 1) * 1.5f);
+        return Mathf.FloorToInt(Mathf.Max(0, stage - 1) * 0.75f);
     }
 
     public static string GetStageDifficultySummary(int stage)
     {
-        return $"Enemy HP x{GetEnemyHealthMultiplier(stage):0.00} | Spawn x{GetEnemySpawnRateMultiplier(stage):0.00} | Group +{GetEnemyGroupBonus(stage)}";
+        return $"Enemy HP x{GetEnemyHealthMultiplier(stage):0.00} | Damage x{GetEnemyDamageMultiplier(stage):0.00} | Spawn x{GetEnemySpawnRateMultiplier(stage):0.00}";
     }
 
     public static void SetDataPack(int amount)
@@ -112,6 +123,42 @@ public static class RunProgress
         SaveRun();
     }
 
+    public static int GetPowerUpLevel(UpgradeType type) => type switch
+    {
+        UpgradeType.OverclockCPU => PowerUpCpuLevel,
+        UpgradeType.UpgradeRAM => PowerUpRamLevel,
+        UpgradeType.Firewall => PowerUpFirewallLevel,
+        UpgradeType.DoubleShot => PowerUpDoubleShotLevel,
+        UpgradeType.Ricochet => PowerUpRicochetLevel,
+        UpgradeType.PiercingBeam => PowerUpPiercingBeamLevel,
+        _ => 0,
+    };
+
+    public static void AddPowerUpLevel(UpgradeType type)
+    {
+        switch (type)
+        {
+            case UpgradeType.OverclockCPU:
+                PowerUpCpuLevel++;
+                break;
+            case UpgradeType.UpgradeRAM:
+                PowerUpRamLevel++;
+                break;
+            case UpgradeType.Firewall:
+                PowerUpFirewallLevel++;
+                break;
+            case UpgradeType.DoubleShot:
+                PowerUpDoubleShotLevel++;
+                break;
+            case UpgradeType.Ricochet:
+                PowerUpRicochetLevel++;
+                break;
+            case UpgradeType.PiercingBeam:
+                PowerUpPiercingBeamLevel++;
+                break;
+        }
+    }
+
     public static void AdvanceStage()
     {
         Stage++;
@@ -126,6 +173,7 @@ public static class RunProgress
         StarterFireRateLevel = 0;
         ServerArmorLevel = 0;
         ExtraBulletsLevel = 0;
+        ClearPowerUps();
         SaveRun();
         GameEvents.RaiseDataPackChanged(DataPack);
     }
@@ -144,6 +192,7 @@ public static class RunProgress
         StarterFireRateLevel = Mathf.Max(0, saveData.StarterFireRateLevel);
         ServerArmorLevel = Mathf.Max(0, saveData.ServerArmorLevel);
         ExtraBulletsLevel = Mathf.Max(0, saveData.ExtraBulletsLevel);
+        ClearPowerUps();
         GameEvents.RaiseDataPackChanged(DataPack);
         return true;
     }
@@ -157,6 +206,7 @@ public static class RunProgress
         StarterFireRateLevel = 0;
         ServerArmorLevel = 0;
         ExtraBulletsLevel = 0;
+        ClearPowerUps();
         GameEvents.RaiseDataPackChanged(DataPack);
     }
 
@@ -182,5 +232,15 @@ public static class RunProgress
         saveDataCache = ScriptableObject.CreateInstance<RunSaveData>();
         saveDataCache.name = "RuntimeRunSaveData";
         return saveDataCache;
+    }
+
+    private static void ClearPowerUps()
+    {
+        PowerUpCpuLevel = 0;
+        PowerUpRamLevel = 0;
+        PowerUpFirewallLevel = 0;
+        PowerUpDoubleShotLevel = 0;
+        PowerUpRicochetLevel = 0;
+        PowerUpPiercingBeamLevel = 0;
     }
 }

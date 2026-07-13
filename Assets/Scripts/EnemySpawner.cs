@@ -11,19 +11,19 @@ public class EnemySpawner : MonoBehaviour
 
     [Header("Spawn Points")]
     [SerializeField] private Transform[] spawnPoints;
-    [SerializeField] private float spawnInterval = 1.8f;
+    [SerializeField] private float spawnInterval = 2.4f;
 
     [Header("Group Spawn Settings")]
-    [SerializeField] private int minGroupSize = 3;
-    [SerializeField] private int maxGroupSize = 7;
+    [SerializeField] private int minGroupSize = 2;
+    [SerializeField] private int maxGroupSize = 5;
     [SerializeField] private float groupSpreadRadius = 0.6f;
 
     [Header("Build Progress Pressure")]
     [Tooltip("Extra spawn speed applied as Build Progress approaches 100%. 2 means twice as fast near the end.")]
-    [SerializeField] private float endBuildSpawnRateMultiplier = 2.5f;
+    [SerializeField] private float endBuildSpawnRateMultiplier = 1.6f;
     [Tooltip("Extra enemies added to each group when Build Progress reaches 100%.")]
-    [SerializeField] private int endBuildGroupBonus = 5;
-    [SerializeField] private float minRuntimeSpawnInterval = 0.22f;
+    [SerializeField] private int endBuildGroupBonus = 2;
+    [SerializeField] private float minRuntimeSpawnInterval = 0.45f;
 
     [Header("Enemy Pool")]
     [SerializeField] private int defaultCapacityPerPrefab = 30;

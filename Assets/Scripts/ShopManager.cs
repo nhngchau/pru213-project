@@ -81,6 +81,7 @@ public class ShopManager : MonoBehaviour
         }
 
         RunProgress.AddBoosterLevel(type);
+        GameEvents.RaiseUpgradePurchased();
         return true;
     }
 }

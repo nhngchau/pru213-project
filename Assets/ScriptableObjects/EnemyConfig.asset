@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyConfig
   maxHP: 20
   moveSpeed: 3
-  damageToServer: 10
-  damageToPlayer: 10
+  damageToServer: 6
+  damageToPlayer: 6
   damageInterval: 1
   dataPackValue: 2
   expReward: 10

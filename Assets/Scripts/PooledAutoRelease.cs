@@ -42,7 +42,7 @@ public class PooledAutoRelease : MonoBehaviour
         yield return new WaitForSeconds(longestLifetime);
         releaseRoutine = null;
 
-        if (pool != null)
+        if (pool != null && gameObject != null)
         {
             pool.Release(this);
         }

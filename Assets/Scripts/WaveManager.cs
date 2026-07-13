@@ -9,7 +9,7 @@ using UnityEngine;
 public class WaveManager : MonoBehaviour
 {
     [Header("Timeline (GDD v3.0)")]
-    [SerializeField] private float buildDuration = 180f; // total survive time => 100% Build
+    [SerializeField] private float buildDuration = 60f; // total survive time => 100% Build
     [Min(1)]
     [SerializeField] private int numberOfWaves = 6;
 

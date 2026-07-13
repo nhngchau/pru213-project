@@ -221,7 +221,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
 
             if (Time.time >= nextDamageTime)
             {
-                touchedServer.TakeDamage(config.damageToServer);
+                touchedServer.TakeDamage(GetScaledDamage(config.damageToServer));
                 Die(false); // Enemy plays death animation and disappears
             }
         }
@@ -234,11 +234,16 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
             {
                 if (collision.TryGetComponent(out IDamageable player))
                 {
-                    player.TakeDamage(config.damageToPlayer);
+                    player.TakeDamage(GetScaledDamage(config.damageToPlayer));
                     nextDamageTime = Time.time + config.damageInterval;
                 }
             }
         }
+    }
+
+    private static int GetScaledDamage(int baseDamage)
+    {
+        return Mathf.Max(0, Mathf.RoundToInt(baseDamage * RunProgress.EnemyDamageMultiplier));
     }
 
     private void OnTriggerExit2D(Collider2D collision)

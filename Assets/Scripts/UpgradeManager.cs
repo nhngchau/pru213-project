@@ -69,6 +69,8 @@ public class UpgradeManager : MonoBehaviour
     void Start()
     {
         CacheBasePlayerStats();
+        LoadPersistedPowerUps();
+        ApplyPersistedPowerUps();
         DataPack = RunProgress.DataPack + startingDataPack;
         RunProgress.SetDataPack(DataPack);
     }
@@ -194,35 +196,41 @@ public class UpgradeManager : MonoBehaviour
         switch (type)
         {
             case UpgradeType.OverclockCPU:
-                cpuLevel++;
+                RunProgress.AddPowerUpLevel(type);
+                cpuLevel = RunProgress.PowerUpCpuLevel;
                 // GDD: bulletDamage = baseDamage + (upgradeLevel * 5)
                 playerShooting?.SetBulletDamage(GetCurrentDamage());
                 break;
 
             case UpgradeType.UpgradeRAM:
-                ramLevel++;
+                RunProgress.AddPowerUpLevel(type);
+                ramLevel = RunProgress.PowerUpRamLevel;
                 // GDD: fireRate = baseFireRate - (upgradeLevel * 0.05f), clamped at 0.1s
                 playerShooting?.SetFireRate(GetCurrentFireRate());
                 break;
 
             case UpgradeType.Firewall:
-                firewallLevel++;
+                RunProgress.AddPowerUpLevel(type);
+                firewallLevel = RunProgress.PowerUpFirewallLevel;
                 // GDD: serverMaxHP += 100; serverCurrentHP += 100;
                 serverCore?.IncreaseMaxHP(firewallHpPerLevel);
                 break;
 
             case UpgradeType.DoubleShot:
-                doubleShotLevel++;
+                RunProgress.AddPowerUpLevel(type);
+                doubleShotLevel = RunProgress.PowerUpDoubleShotLevel;
                 playerShooting?.SetBulletsPerShot(GetCurrentBulletsPerShot());
                 break;
 
             case UpgradeType.Ricochet:
-                ricochetLevel++;
+                RunProgress.AddPowerUpLevel(type);
+                ricochetLevel = RunProgress.PowerUpRicochetLevel;
                 playerShooting?.SetBulletBounces(GetCurrentBounces());
                 break;
 
             case UpgradeType.PiercingBeam:
-                piercingBeamLevel++;
+                RunProgress.AddPowerUpLevel(type);
+                piercingBeamLevel = RunProgress.PowerUpPiercingBeamLevel;
                 playerShooting?.SetBulletPierces(GetCurrentPierces());
                 break;
         }
@@ -248,5 +256,29 @@ public class UpgradeManager : MonoBehaviour
     private float GetNextFireRate()
     {
         return Mathf.Max(minFireRate, baseFireRate - (ramLevel + 1) * fireRateReductionPerRamLevel);
+    }
+
+    private void LoadPersistedPowerUps()
+    {
+        cpuLevel = RunProgress.PowerUpCpuLevel;
+        ramLevel = RunProgress.PowerUpRamLevel;
+        firewallLevel = RunProgress.PowerUpFirewallLevel;
+        doubleShotLevel = RunProgress.PowerUpDoubleShotLevel;
+        ricochetLevel = RunProgress.PowerUpRicochetLevel;
+        piercingBeamLevel = RunProgress.PowerUpPiercingBeamLevel;
+    }
+
+    private void ApplyPersistedPowerUps()
+    {
+        playerShooting?.SetBulletDamage(GetCurrentDamage());
+        playerShooting?.SetFireRate(GetCurrentFireRate());
+        playerShooting?.SetBulletsPerShot(GetCurrentBulletsPerShot());
+        playerShooting?.SetBulletBounces(GetCurrentBounces());
+        playerShooting?.SetBulletPierces(GetCurrentPierces());
+
+        if (firewallLevel > 0)
+        {
+            serverCore?.IncreaseMaxHP(firewallLevel * firewallHpPerLevel);
+        }
     }
 }

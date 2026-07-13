@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHP: 20
   moveSpeed: 1
-  damageToServer: 20
-  damageToPlayer: 20
+  damageToServer: 12
+  damageToPlayer: 12
   damageInterval: 1
   dataPackValue: 8
   expReward: 30
