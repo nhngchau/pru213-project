@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Game end-state owner (GDD v3.0): win / lose flags + their panels. The 180s Build Progress
+/// Game end-state owner (GDD v3.0): win / lose flags. The Build Progress
 /// timeline now lives in WaveManager, which calls TriggerWin() on the final wave; ServerCore
 /// calls TriggerGameOver() when the Server dies.
 /// </summary>
@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     public bool IsGameOver { get; private set; }
     public bool IsGameWon { get; private set; }
     public bool IsGameEnded => IsGameOver || IsGameWon;
+    public bool IsPaused { get; private set; }
 
     void Awake()
     {
@@ -30,6 +31,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        PlayerProgression.EnsureExistsForCurrentScene();
         Time.timeScale = 1f;
         IsGameOver = false;
         IsGameWon = false;
@@ -55,8 +57,9 @@ public class GameManager : MonoBehaviour
         IsGameOver = true;
         GameAudioManager.Instance?.PlayGameOver();
         Time.timeScale = 0f;
+        GameEvents.RaiseGameOver();
 
-        if (gameOverPanel != null)
+        if (!GameUIManager.HasInstance && gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
         }
@@ -75,12 +78,22 @@ public class GameManager : MonoBehaviour
         IsGameWon = true;
         GameAudioManager.Instance?.PlayWin();
         Time.timeScale = 0f;
+        GameEvents.RaiseGameWon();
 
-        if (winPanel != null)
+        if (!GameUIManager.HasInstance && winPanel != null)
         {
             winPanel.SetActive(true);
         }
 
         Debug.Log("Build Complete! You Win!");
+    }
+
+    public void TogglePause()
+    {
+        if (IsGameEnded) return;
+
+        IsPaused = !IsPaused;
+        Time.timeScale = IsPaused ? 0f : 1f;
+        GameEvents.RaiseGamePaused(IsPaused);
     }
 }

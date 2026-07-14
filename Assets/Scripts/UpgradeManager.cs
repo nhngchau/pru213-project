@@ -5,13 +5,15 @@ public enum UpgradeType
 {
     OverclockCPU, // damage
     UpgradeRAM,   // fire rate
-    Firewall      // server HP
+    Firewall,     // server HP
+    DoubleShot,   // more bullets per shot
+    Ricochet,     // bullets bounce off walls
+    PiercingBeam  // bullets pierce enemies
 }
 
 /// <summary>
-/// DataPack economy + stat upgrades (GDD v3.0 - Section VI). Owns the wallet and upgrade levels,
-/// computes costs/effects and applies them to the relevant components. Pure gameplay/logic: the UI
-/// talks to it only through the public query/purchase API and refreshes via GameEvents.
+/// Runtime power-up upgrades. DataPack is still collected as currency, but combat power-ups are
+/// granted by level-up choices and do not spend DataPack.
 /// </summary>
 public class UpgradeManager : MonoBehaviour
 {
@@ -21,23 +23,30 @@ public class UpgradeManager : MonoBehaviour
     [SerializeField] private PlayerShooting playerShooting;
     [SerializeField] private ServerCore serverCore;
 
-    [Header("Economy")]
+    [Header("Currency")]
     [SerializeField] private int startingDataPack = 0;
 
-    // GDD base values.
-    private const int BaseDamage = 10;
-    private const float BaseFireRate = 0.5f;
-    private const float MinFireRate = 0.1f;
+    [Header("Upgrade Values")]
+    [SerializeField] private int damagePerCpuLevel = 5;
+    [SerializeField] private float fireRateReductionPerRamLevel = 0.05f;
+    [SerializeField] private float minFireRate = 0.1f;
+    [SerializeField] private int firewallHpPerLevel = 100;
+    [SerializeField] private int bulletsPerDoubleShotLevel = 1;
+    [SerializeField] private int bouncesPerRicochetLevel = 1;
+    [SerializeField] private int piercesPerBeamLevel = 1;
 
-    // GDD costs: index = current level -> cost of the NEXT purchase. CPU/RAM cap at 3 levels.
-    private static readonly int[] CpuCosts = { 50, 100, 150 };
-    private static readonly int[] RamCosts = { 75, 125, 175 };
-    private const int FirewallCost = 100;       // flat price, repeatable
-    private const int FirewallHpPerLevel = 100;
+    private int baseDamage = 10;
+    private float baseFireRate = 0.15f;
+    private int baseBulletsPerShot = 1;
+    private int baseBulletBounces;
+    private int baseBulletPierces;
 
     private int cpuLevel;
     private int ramLevel;
     private int firewallLevel;
+    private int doubleShotLevel;
+    private int ricochetLevel;
+    private int piercingBeamLevel;
 
     public int DataPack { get; private set; }
 
@@ -59,77 +68,217 @@ public class UpgradeManager : MonoBehaviour
 
     void Start()
     {
-        DataPack = startingDataPack;
-        GameEvents.RaiseDataPackChanged(DataPack);
+        CacheBasePlayerStats();
+        LoadPersistedPowerUps();
+        ApplyPersistedPowerUps();
+        DataPack = RunProgress.DataPack + startingDataPack;
+        RunProgress.SetDataPack(DataPack);
+    }
+
+    private void CacheBasePlayerStats()
+    {
+        if (playerShooting == null)
+        {
+            return;
+        }
+
+        baseDamage = playerShooting.BulletDamage;
+        baseFireRate = playerShooting.FireRate;
+        baseBulletsPerShot = playerShooting.BulletsPerShot;
+        baseBulletBounces = playerShooting.BulletBounces;
+        baseBulletPierces = playerShooting.BulletPierces;
     }
 
     private void AddDataPack(int amount)
     {
-        DataPack += Mathf.Max(0, amount);
-        GameEvents.RaiseDataPackChanged(DataPack);
+        RunProgress.AddDataPack(amount);
+        DataPack = RunProgress.DataPack;
     }
 
     // --- Queries used by the UI ------------------------------------------
 
     public bool IsMaxed(UpgradeType type) => type switch
     {
-        UpgradeType.OverclockCPU => cpuLevel >= CpuCosts.Length,
-        UpgradeType.UpgradeRAM => ramLevel >= RamCosts.Length,
-        _ => false, // Firewall is repeatable
+        UpgradeType.UpgradeRAM => Mathf.Approximately(GetCurrentFireRate(), minFireRate),
+        _ => false,
     };
 
-    public int GetCost(UpgradeType type) => type switch
-    {
-        UpgradeType.OverclockCPU => IsMaxed(type) ? 0 : CpuCosts[cpuLevel],
-        UpgradeType.UpgradeRAM => IsMaxed(type) ? 0 : RamCosts[ramLevel],
-        UpgradeType.Firewall => FirewallCost,
-        _ => 0,
-    };
-
-    public bool CanAfford(UpgradeType type) => !IsMaxed(type) && DataPack >= GetCost(type);
+    public bool CanChoose(UpgradeType type) => !IsMaxed(type);
 
     public string GetDescription(UpgradeType type) => type switch
     {
-        UpgradeType.OverclockCPU => IsMaxed(type) ? "MAX LEVEL" : $"Damage +5  (Lv {cpuLevel + 1})",
-        UpgradeType.UpgradeRAM => IsMaxed(type) ? "MAX LEVEL" : $"Fire Rate -0.05s  (Lv {ramLevel + 1})",
-        UpgradeType.Firewall => $"Server +{FirewallHpPerLevel} HP",
+        UpgradeType.OverclockCPU => IsMaxed(type)
+            ? "MAX LEVEL"
+            : $"Damage {GetCurrentDamage()} -> {GetNextDamage()}  (Lv {cpuLevel + 1})",
+        UpgradeType.UpgradeRAM => IsMaxed(type)
+            ? "MAX LEVEL"
+            : $"Fire Rate {GetCurrentFireRate():0.00}s -> {GetNextFireRate():0.00}s  (Lv {ramLevel + 1})",
+        UpgradeType.Firewall => $"Server +{firewallHpPerLevel} HP",
+        UpgradeType.DoubleShot => IsMaxed(type)
+            ? "MAX LEVEL"
+            : $"Bullets {GetCurrentBulletsPerShot()} -> {GetNextBulletsPerShot()}  (Lv {doubleShotLevel + 1})",
+        UpgradeType.Ricochet => IsMaxed(type)
+            ? "MAX LEVEL"
+            : $"Bounce {GetCurrentBounces()} -> {GetNextBounces()}  (Lv {ricochetLevel + 1})",
+        UpgradeType.PiercingBeam => IsMaxed(type)
+            ? "MAX LEVEL"
+            : $"Pierce {GetCurrentPierces()} -> {GetNextPierces()}  (Lv {piercingBeamLevel + 1})",
         _ => string.Empty,
     };
 
+    public string GetTitle(UpgradeType type) => type switch
+    {
+        UpgradeType.OverclockCPU => "Overclock CPU",
+        UpgradeType.UpgradeRAM => "Upgrade RAM",
+        UpgradeType.Firewall => "Firewall",
+        UpgradeType.DoubleShot => "Double Shot",
+        UpgradeType.Ricochet => "Ricochet Bullet",
+        UpgradeType.PiercingBeam => "Piercing Beam",
+        _ => string.Empty,
+    };
+
+    public UpgradeType[] GetRandomPowerUpOptions(int count)
+    {
+        UpgradeType[] pool =
+        {
+            UpgradeType.OverclockCPU,
+            UpgradeType.UpgradeRAM,
+            UpgradeType.Firewall,
+            UpgradeType.DoubleShot,
+            UpgradeType.Ricochet,
+            UpgradeType.PiercingBeam,
+        };
+
+        int targetCount = Mathf.Max(1, count);
+        UpgradeType[] options = new UpgradeType[targetCount];
+        int[] indices = new int[pool.Length];
+
+        for (int i = 0; i < indices.Length; i++)
+        {
+            indices[i] = i;
+        }
+
+        for (int i = 0; i < indices.Length; i++)
+        {
+            int swapIndex = Random.Range(i, indices.Length);
+            (indices[i], indices[swapIndex]) = (indices[swapIndex], indices[i]);
+        }
+
+        int optionIndex = 0;
+        for (int i = 0; i < indices.Length && optionIndex < targetCount; i++)
+        {
+            UpgradeType type = pool[indices[i]];
+            if (CanChoose(type))
+            {
+                options[optionIndex] = type;
+                optionIndex++;
+            }
+        }
+
+        while (optionIndex < targetCount)
+        {
+            options[optionIndex] = UpgradeType.Firewall;
+            optionIndex++;
+        }
+
+        return options;
+    }
+
     // --- Purchase --------------------------------------------------------
 
-    public bool TryPurchase(UpgradeType type)
+    public bool TryApplyPowerUp(UpgradeType type)
     {
-        if (!CanAfford(type))
+        if (!CanChoose(type))
         {
             return false;
         }
 
-        DataPack -= GetCost(type);
-
         switch (type)
         {
             case UpgradeType.OverclockCPU:
-                cpuLevel++;
+                RunProgress.AddPowerUpLevel(type);
+                cpuLevel = RunProgress.PowerUpCpuLevel;
                 // GDD: bulletDamage = baseDamage + (upgradeLevel * 5)
-                playerShooting?.SetBulletDamage(BaseDamage + cpuLevel * 5);
+                playerShooting?.SetBulletDamage(GetCurrentDamage());
                 break;
 
             case UpgradeType.UpgradeRAM:
-                ramLevel++;
+                RunProgress.AddPowerUpLevel(type);
+                ramLevel = RunProgress.PowerUpRamLevel;
                 // GDD: fireRate = baseFireRate - (upgradeLevel * 0.05f), clamped at 0.1s
-                playerShooting?.SetFireRate(Mathf.Max(MinFireRate, BaseFireRate - ramLevel * 0.05f));
+                playerShooting?.SetFireRate(GetCurrentFireRate());
                 break;
 
             case UpgradeType.Firewall:
-                firewallLevel++;
+                RunProgress.AddPowerUpLevel(type);
+                firewallLevel = RunProgress.PowerUpFirewallLevel;
                 // GDD: serverMaxHP += 100; serverCurrentHP += 100;
-                serverCore?.IncreaseMaxHP(FirewallHpPerLevel);
+                serverCore?.IncreaseMaxHP(firewallHpPerLevel);
+                break;
+
+            case UpgradeType.DoubleShot:
+                RunProgress.AddPowerUpLevel(type);
+                doubleShotLevel = RunProgress.PowerUpDoubleShotLevel;
+                playerShooting?.SetBulletsPerShot(GetCurrentBulletsPerShot());
+                break;
+
+            case UpgradeType.Ricochet:
+                RunProgress.AddPowerUpLevel(type);
+                ricochetLevel = RunProgress.PowerUpRicochetLevel;
+                playerShooting?.SetBulletBounces(GetCurrentBounces());
+                break;
+
+            case UpgradeType.PiercingBeam:
+                RunProgress.AddPowerUpLevel(type);
+                piercingBeamLevel = RunProgress.PowerUpPiercingBeamLevel;
+                playerShooting?.SetBulletPierces(GetCurrentPierces());
                 break;
         }
 
-        GameEvents.RaiseDataPackChanged(DataPack);
         GameEvents.RaiseUpgradePurchased();
         return true;
+    }
+
+    private int GetCurrentDamage() => baseDamage + cpuLevel * damagePerCpuLevel;
+    private int GetNextDamage() => baseDamage + (cpuLevel + 1) * damagePerCpuLevel;
+    private int GetCurrentBulletsPerShot() => baseBulletsPerShot + doubleShotLevel * bulletsPerDoubleShotLevel;
+    private int GetNextBulletsPerShot() => baseBulletsPerShot + (doubleShotLevel + 1) * bulletsPerDoubleShotLevel;
+    private int GetCurrentBounces() => baseBulletBounces + ricochetLevel * bouncesPerRicochetLevel;
+    private int GetNextBounces() => baseBulletBounces + (ricochetLevel + 1) * bouncesPerRicochetLevel;
+    private int GetCurrentPierces() => baseBulletPierces + piercingBeamLevel * piercesPerBeamLevel;
+    private int GetNextPierces() => baseBulletPierces + (piercingBeamLevel + 1) * piercesPerBeamLevel;
+
+    private float GetCurrentFireRate()
+    {
+        return Mathf.Max(minFireRate, baseFireRate - ramLevel * fireRateReductionPerRamLevel);
+    }
+
+    private float GetNextFireRate()
+    {
+        return Mathf.Max(minFireRate, baseFireRate - (ramLevel + 1) * fireRateReductionPerRamLevel);
+    }
+
+    private void LoadPersistedPowerUps()
+    {
+        cpuLevel = RunProgress.PowerUpCpuLevel;
+        ramLevel = RunProgress.PowerUpRamLevel;
+        firewallLevel = RunProgress.PowerUpFirewallLevel;
+        doubleShotLevel = RunProgress.PowerUpDoubleShotLevel;
+        ricochetLevel = RunProgress.PowerUpRicochetLevel;
+        piercingBeamLevel = RunProgress.PowerUpPiercingBeamLevel;
+    }
+
+    private void ApplyPersistedPowerUps()
+    {
+        playerShooting?.SetBulletDamage(GetCurrentDamage());
+        playerShooting?.SetFireRate(GetCurrentFireRate());
+        playerShooting?.SetBulletsPerShot(GetCurrentBulletsPerShot());
+        playerShooting?.SetBulletBounces(GetCurrentBounces());
+        playerShooting?.SetBulletPierces(GetCurrentPierces());
+
+        if (firewallLevel > 0)
+        {
+            serverCore?.IncreaseMaxHP(firewallLevel * firewallHpPerLevel);
+        }
     }
 }

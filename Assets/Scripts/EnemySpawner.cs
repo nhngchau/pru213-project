@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 public class EnemySpawner : MonoBehaviour
 {
@@ -9,16 +11,66 @@ public class EnemySpawner : MonoBehaviour
 
     [Header("Spawn Points")]
     [SerializeField] private Transform[] spawnPoints;
-    [SerializeField] private float spawnInterval = 2f;
+    [SerializeField] private float spawnInterval = 2.4f;
 
     [Header("Group Spawn Settings")]
-    [SerializeField] private int minGroupSize = 3;
-    [SerializeField] private int maxGroupSize = 6;
+    [SerializeField] private int minGroupSize = 2;
+    [SerializeField] private int maxGroupSize = 5;
     [SerializeField] private float groupSpreadRadius = 0.6f;
+
+    [Header("Build Progress Pressure")]
+    [Tooltip("Extra spawn speed applied as Build Progress approaches 100%. 2 means twice as fast near the end.")]
+    [SerializeField] private float endBuildSpawnRateMultiplier = 1.6f;
+    [Tooltip("Extra enemies added to each group when Build Progress reaches 100%.")]
+    [SerializeField] private int endBuildGroupBonus = 2;
+    [SerializeField] private float minRuntimeSpawnInterval = 0.45f;
+
+    [Header("Enemy Pool")]
+    [SerializeField] private int defaultCapacityPerPrefab = 30;
+    [SerializeField] private int maxPoolSizePerPrefab = 160;
+
+    private readonly Dictionary<GameObject, IObjectPool<EnemyBehavior>> enemyPools = new Dictionary<GameObject, IObjectPool<EnemyBehavior>>();
+    private float runtimeSpawnInterval;
+    private int runtimeMinGroupSize;
+    private int runtimeMaxGroupSize;
+    private float buildProgress01;
+
+    private void Awake()
+    {
+        BuildPools();
+    }
+
+    private void OnEnable()
+    {
+        GameEvents.OnBuildProgressChanged += HandleBuildProgressChanged;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnBuildProgressChanged -= HandleBuildProgressChanged;
+    }
 
     private void Start()
     {
+        ApplySpawnScaling();
         StartCoroutine(SpawnEnemyRoutine());
+    }
+
+    private void HandleBuildProgressChanged(float percent)
+    {
+        buildProgress01 = Mathf.Clamp01(percent / 100f);
+        ApplySpawnScaling();
+    }
+
+    private void ApplySpawnScaling()
+    {
+        float stageSpawnMultiplier = Mathf.Max(1f, RunProgress.EnemySpawnRateMultiplier);
+        float buildSpawnMultiplier = Mathf.Lerp(1f, Mathf.Max(1f, endBuildSpawnRateMultiplier), buildProgress01);
+        int buildGroupBonus = Mathf.RoundToInt(Mathf.Max(0, endBuildGroupBonus) * buildProgress01);
+
+        runtimeSpawnInterval = Mathf.Max(minRuntimeSpawnInterval, spawnInterval / (stageSpawnMultiplier * buildSpawnMultiplier));
+        runtimeMinGroupSize = minGroupSize + RunProgress.EnemyGroupBonus + buildGroupBonus;
+        runtimeMaxGroupSize = maxGroupSize + RunProgress.EnemyGroupBonus + buildGroupBonus;
     }
 
     private IEnumerator SpawnEnemyRoutine()
@@ -31,7 +83,7 @@ public class EnemySpawner : MonoBehaviour
                 yield break;
             }
 
-            yield return new WaitForSeconds(spawnInterval);
+            yield return new WaitForSeconds(runtimeSpawnInterval);
             SpawnEnemyGroup();
         }
     }
@@ -61,8 +113,8 @@ public class EnemySpawner : MonoBehaviour
 
         // --- Determine group size -------------------------------------------
         // Random.Range (int) is exclusive on max, so add 1 to include maxGroupSize.
-        int smallestGroup = Mathf.Min(minGroupSize, maxGroupSize);
-        int largestGroup  = Mathf.Max(minGroupSize, maxGroupSize);
+        int smallestGroup = Mathf.Min(runtimeMinGroupSize, runtimeMaxGroupSize);
+        int largestGroup  = Mathf.Max(runtimeMinGroupSize, runtimeMaxGroupSize);
         int groupSize     = Random.Range(smallestGroup, largestGroup + 1);
 
         // --- Spawn each enemy in the group ----------------------------------
@@ -80,14 +132,64 @@ public class EnemySpawner : MonoBehaviour
             Vector2 spreadOffset = Random.insideUnitCircle * groupSpreadRadius;
             Vector3 spawnPosition = spawnPoint.position + new Vector3(spreadOffset.x, spreadOffset.y, 0f);
 
-            GameObject enemyObject = Instantiate(prefab, spawnPosition, spawnPoint.rotation);
-
-            // Reset enemy state if the prefab uses EnemyBehavior (safe no-op otherwise).
-            EnemyBehavior enemy = enemyObject.GetComponent<EnemyBehavior>();
+            EnemyBehavior enemy = GetEnemy(prefab);
             if (enemy != null)
             {
+                enemy.transform.SetPositionAndRotation(spawnPosition, spawnPoint.rotation);
                 enemy.ResetState();
             }
         }
+    }
+
+    private void BuildPools()
+    {
+        enemyPools.Clear();
+        if (enemyPrefabs == null)
+        {
+            return;
+        }
+
+        foreach (GameObject prefab in enemyPrefabs)
+        {
+            if (prefab == null || enemyPools.ContainsKey(prefab))
+            {
+                continue;
+            }
+
+            if (!prefab.TryGetComponent(out EnemyBehavior _))
+            {
+                Debug.LogWarning($"EnemySpawner: '{prefab.name}' has no EnemyBehavior component and cannot be pooled.");
+                continue;
+            }
+
+            enemyPools[prefab] = new ObjectPool<EnemyBehavior>(
+                createFunc: () => CreateEnemy(prefab),
+                actionOnGet: enemy => enemy.gameObject.SetActive(true),
+                actionOnRelease: enemy => enemy.gameObject.SetActive(false),
+                actionOnDestroy: enemy => Destroy(enemy.gameObject),
+                collectionCheck: true,
+                defaultCapacity: Mathf.Max(1, defaultCapacityPerPrefab),
+                maxSize: Mathf.Max(defaultCapacityPerPrefab, maxPoolSizePerPrefab));
+        }
+    }
+
+    private EnemyBehavior CreateEnemy(GameObject prefab)
+    {
+        GameObject enemyObject = Instantiate(prefab);
+        EnemyBehavior enemy = enemyObject.GetComponent<EnemyBehavior>();
+        enemy.SetPool(enemyPools[prefab]);
+        enemyObject.SetActive(false);
+        return enemy;
+    }
+
+    private EnemyBehavior GetEnemy(GameObject prefab)
+    {
+        if (!enemyPools.TryGetValue(prefab, out IObjectPool<EnemyBehavior> pool))
+        {
+            Debug.LogWarning($"EnemySpawner: No pool found for '{prefab.name}'. Check Enemy Prefabs.");
+            return null;
+        }
+
+        return pool.Get();
     }
 }

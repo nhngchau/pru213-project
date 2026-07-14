@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Senior Defender - Tài liệu hoàn thiện game</title>
+  <link rel="stylesheet" href="game-completion-doc.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero" id="top">
+      <div class="hero-main">
+        <p class="eyebrow">Tài liệu thiết kế & hoàn thiện</p>
+        <h1>The Senior Defender</h1>
+        <p class="lead">
+          Người chơi bảo vệ server ở giữa màn hình, bắn các enemy lao tới phá server,
+          thu thập DataPack để tích điểm và nâng cấp sát thương, tốc độ bắn. Nếu server
+          hết HP thì thua ngay; nếu bảo vệ được server tới khi Build Progress đạt 100%
+          thì thắng.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="#user-flow">Xem user flow</a>
+          <a class="button" href="#metrics">Xem chỉ số</a>
+          <a class="button" href="#roadmap">Xem roadmap</a>
+        </div>
+      </div>
+      <aside class="hero-side">
+        <p class="eyebrow">Mục tiêu bản hoàn thiện</p>
+        <div class="score-grid">
+          <div class="score">
+            <strong>3 phút</strong>
+            <span>Thời lượng một run đầy đủ</span>
+          </div>
+          <div class="score">
+            <strong>6 wave</strong>
+          <span>Nhịp sống sót tới Build Progress 100%</span>
+          </div>
+          <div class="score">
+            <strong>80+</strong>
+            <span>Enemy active vẫn ổn định</span>
+          </div>
+          <div class="score">
+            <strong>30 giây</strong>
+            <span>Người mới hiểu mục tiêu game</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="toc" aria-label="Mục lục">
+      <p class="toc-title">Mục lục nhanh</p>
+      <nav>
+        <a href="#overview">Tổng quan</a>
+        <a href="#user-flow">User flow</a>
+        <a href="#metrics">Chỉ số</a>
+        <a href="#technical">Kỹ thuật</a>
+        <a href="#configs">Config</a>
+        <a href="#free-assets">Free assets</a>
+        <a href="#ui">UI/UX</a>
+        <a href="#feel">Game feel</a>
+        <a href="#balancing">Balancing</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#done">Definition of Done</a>
+      </nav>
+    </section>
+
+    <section class="section" id="overview">
+      <h2>1. Tổng Quan Sản Phẩm</h2>
+      <p>
+        <strong>The Senior Defender</strong> là game 2D top-down shooter/defender.
+        Người chơi bảo vệ một server đặt ở giữa màn hình. Các enemy liên tục lao tới
+        để phá server. Player phải di chuyển quanh khu vực phòng thủ, bắn hạ enemy,
+        thu thập DataPack để tích điểm nâng cấp và sống sót qua nhiều wave cho đến khi
+        thanh Build Progress đạt 100%.
+      </p>
+      <div class="note">
+        Điều kiện thua rất rõ: server hết HP là thua ngay. Điều kiện thắng cũng rất rõ:
+        giữ server sống cho tới khi Build Progress đạt 100%.
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <span class="tag">Core loop</span>
+          <h3>Bảo vệ server trung tâm</h3>
+          <p>Enemy spawn theo wave và lao vào server. Người chơi phải chặn đường, bắn hạ và ưu tiên enemy nguy hiểm.</p>
+        </div>
+        <div class="card">
+          <span class="tag">Progression</span>
+          <h3>DataPack và nâng cấp sinh tồn</h3>
+          <p>Enemy chết thưởng DataPack. Người chơi dùng điểm này để nâng sát thương và tốc độ bắn, giúp sống sót qua wave sau.</p>
+        </div>
+        <div class="card">
+          <span class="tag">Polish</span>
+          <h3>Áp lực build 100%</h3>
+          <p>Build Progress là đồng hồ chiến thắng. Càng gần 100%, enemy càng đông và feedback phải làm người chơi cảm thấy căng hơn.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="user-flow">
+      <h2>2. User Flow Chi Tiết</h2>
+      <ol class="flow">
+        <li><strong>Main Menu:</strong> người chơi thấy tên game, nút Play, Guide, Quit. Guide phải nói rõ mục tiêu là bảo vệ server ở giữa.</li>
+        <li><strong>Vào GameScene:</strong> server nằm ở trung tâm. HUD hiện Server HP, Player HP, Build Progress, Wave và DataPack.</li>
+        <li><strong>Wave bắt đầu:</strong> enemy spawn từ ngoài vùng chơi và lao thẳng tới server để phá nó. Wave 1 nhẹ để người mới học cách bắn.</li>
+        <li><strong>Combat:</strong> người chơi dùng WASD/Arrow để di chuyển quanh server, chuột trái để bắn enemy, chuột phải để dùng ultimate.</li>
+        <li><strong>Nhận DataPack:</strong> enemy bị tiêu diệt cộng DataPack ngay. DataPack là điểm tài nguyên để nâng cấp sức mạnh.</li>
+        <li><strong>Nâng cấp:</strong> sau wave, game pause và mở Upgrade Panel. Người chơi ưu tiên nâng sát thương, tốc độ bắn, hoặc Firewall nếu server yếu.</li>
+        <li><strong>Wave sau khó hơn:</strong> enemy spawn dày hơn, có enemy nhanh, enemy né đạn và enemy trâu hơn để ép người chơi tận dụng upgrade.</li>
+        <li><strong>Kết thúc:</strong> nếu Server HP về 0 thì thua ngay; nếu Build Progress đạt 100% khi server còn sống thì thắng.</li>
+      </ol>
+
+      <h3>Flow 30 giây đầu</h3>
+      <ul>
+        <li>0-5 giây: server ở giữa phải nổi bật; HUD Server HP và Build Progress phải dễ nhìn.</li>
+        <li>5-15 giây: enemy đầu tiên lao về server từ hướng rõ ràng; người chơi bắn hạ và thấy DataPack tăng.</li>
+        <li>15-30 giây: server có thể bị đánh nhẹ để người chơi hiểu mất server là thua ngay.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="metrics">
+      <h2>3. Chỉ Số Gameplay Đề Xuất</h2>
+
+      <h3>Player</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Chỉ số</th>
+            <th>Giá trị đề xuất</th>
+            <th>Ghi chú cân bằng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Player HP</td><td>100</td><td>Đủ để chịu vài lỗi nhỏ nhưng vẫn có áp lực.</td></tr>
+          <tr><td>Move Speed</td><td>5</td><td>Phù hợp top-down, có thể tăng nhẹ nếu map rộng.</td></tr>
+          <tr><td>Respawn Penalty</td><td>5 giây</td><td>Khi player down, server bị bỏ mặc nên tạo áp lực tốt.</td></tr>
+          <tr><td>Invulnerable Duration</td><td>2 giây</td><td>Tránh hồi sinh xong chết lại ngay.</td></tr>
+          <tr><td>Bullet Damage</td><td>10</td><td>Làm base cho nâng cấp sát thương.</td></tr>
+          <tr><td>Fire Rate</td><td>0.35-0.5 giây</td><td>Nâng tốc độ bắn phải thấy rõ vì đây là upgrade sinh tồn chính.</td></tr>
+          <tr><td>Ultimate Cooldown</td><td>10-15 giây</td><td>Nếu ultimate quét quá mạnh, tăng cooldown.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Enemy</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Enemy</th>
+            <th>HP</th>
+            <th>Speed</th>
+            <th>Server Damage</th>
+            <th>Reward</th>
+            <th>Vai trò</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Syntax Error</td><td>20</td><td>3.5</td><td>10</td><td>5 DP</td><td>Yếu, đông, tạo áp lực số lượng.</td></tr>
+          <tr><td>Logic Bug</td><td>40</td><td>2.5</td><td>15</td><td>10 DP</td><td>Zigzag/né đạn, buộc người chơi nhắm tốt hơn.</td></tr>
+          <tr><td>Memory Leak</td><td>150</td><td>1.2</td><td>30</td><td>25 DP</td><td>Tank chậm, để lại Sludge khi chết.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Wave Pacing</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Wave</th>
+            <th>Thời lượng</th>
+            <th>Enemy chính</th>
+            <th>Cảm giác mong muốn</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>30 giây</td><td>Syntax Error</td><td>Học điều khiển và bắn.</td></tr>
+          <tr><td>2</td><td>30 giây</td><td>Syntax + ít Logic</td><td>Bắt đầu cần nhắm tốt.</td></tr>
+          <tr><td>3</td><td>30 giây</td><td>Syntax + Logic</td><td>Upgrade đầu tiên phải có tác dụng rõ.</td></tr>
+          <tr><td>4</td><td>30 giây</td><td>Thêm Memory Leak</td><td>Giới thiệu tank và Sludge.</td></tr>
+          <tr><td>5</td><td>30 giây</td><td>Hỗn hợp đông</td><td>Cao trào, cần dùng ultimate.</td></tr>
+          <tr><td>6</td><td>30 giây</td><td>Hỗn hợp dày</td><td>Final wave, áp lực lớn nhất.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section" id="technical">
+      <h2>4. Chỉ Số Kỹ Thuật Cần Đo</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Performance mục tiêu</h3>
+          <ul>
+            <li><span class="metric-good">60 FPS</span> trong gameplay thường.</li>
+            <li><span class="metric-warn">&gt;= 45 FPS</span> khi có 100 enemy active.</li>
+            <li>Không thấy đứng khung hình khi spawn group.</li>
+            <li>GC Alloc trong combat càng thấp càng tốt.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Stability checklist</h3>
+          <ul>
+            <li>Không có NullReferenceException khi vào GameScene.</li>
+            <li>Restart sau Win/Lose không bị kẹt <code>Time.timeScale = 0</code>.</li>
+            <li>Enemy pooled không giữ animation chết.</li>
+            <li>Bullet pooled không giữ velocity cũ.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note">
+        Kiểm tra bằng Unity Profiler: tạo 80-120 enemy active, xem CPU Usage, GC Alloc và spike khi enemy spawn/chết.
+      </div>
+    </section>
+
+    <section class="section" id="configs">
+      <h2>5. Hệ Thống Config Nên Dùng</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>EnemyConfig</h3>
+          <p>Tạo asset trong <code>Assets/Configs/Enemies/</code>:</p>
+          <ul>
+            <li><code>SyntaxErrorConfig.asset</code></li>
+            <li><code>LogicBugConfig.asset</code></li>
+            <li><code>MemoryLeakConfig.asset</code></li>
+          </ul>
+          <p>Chỉnh: HP, tốc độ, damage, reward, death delay, death effect.</p>
+        </div>
+        <div class="card">
+          <h3>WeaponConfig</h3>
+          <p>Tạo asset trong <code>Assets/Configs/Weapons/</code>:</p>
+          <ul>
+            <li><code>BaseCodeGun.asset</code></li>
+          </ul>
+          <p>Chỉnh: sát thương, tốc độ bắn, số đạn mỗi lần bắn, spread, recoil, pool size.</p>
+        </div>
+      </div>
+
+      <h3>WaveConfig đề xuất thêm sau</h3>
+      <table>
+        <thead>
+          <tr><th>Wave</th><th>Syntax</th><th>Logic</th><th>Memory</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>100%</td><td>0%</td><td>0%</td></tr>
+          <tr><td>2</td><td>80%</td><td>20%</td><td>0%</td></tr>
+          <tr><td>3</td><td>65%</td><td>35%</td><td>0%</td></tr>
+          <tr><td>4</td><td>60%</td><td>25%</td><td>15%</td></tr>
+          <tr><td>5</td><td>50%</td><td>35%</td><td>15%</td></tr>
+          <tr><td>6</td><td>45%</td><td>35%</td><td>20%</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section" id="free-assets">
+      <h2>6. Free Asset Phù Hợp Concept</h2>
+      <p>
+        Concept của game là bảo vệ server trung tâm trong không gian công nghệ/sci-fi.
+        Vì vậy nên ưu tiên asset có ngôn ngữ hình ảnh cyber, space, hologram, neon xanh/cam,
+        icon rõ ràng và dễ đọc trên HUD.
+      </p>
+
+      <h3>Asset UI chính nên dùng</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Nguồn</th>
+            <th>License / Giá</th>
+            <th>Dùng cho</th>
+            <th>Đánh giá phù hợp</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://assetstore.unity.com/packages/2d/gui/icons/space-game-gui-kit-298577">Space Game GUI kit</a></td>
+            <td>Unity Asset Store</td>
+            <td>Free, Standard Unity Asset Store EULA</td>
+            <td>Main Menu, HUD sci-fi, button, icon, panel, upgrade UI</td>
+            <td><strong>Rất hợp</strong>: đúng màu sci-fi/space, hợp với server/build progress và UI công nghệ.</td>
+          </tr>
+          <tr>
+            <td><a href="https://kenney.nl/assets/ui-pack-sci-fi">Kenney UI Pack - Sci-Fi</a></td>
+            <td>Kenney</td>
+            <td>CC0, free</td>
+            <td>Button, panel, slider, progress bar, popup, icon nền</td>
+            <td><strong>Rất hợp</strong>: sạch, dễ chỉnh màu, license thoải mái, tốt để dùng fallback hoặc mix với Space Game GUI kit.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Asset gameplay/VFX/audio nên dùng kèm</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Nguồn</th>
+            <th>License / Giá</th>
+            <th>Dùng cho</th>
+            <th>Ghi chú tích hợp</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://kenney.nl/assets/top-down-shooter">Kenney Top-down Shooter</a></td>
+            <td>Kenney</td>
+            <td>CC0, free</td>
+            <td>Tile, furniture, object top-down, prop cho map phòng/server</td>
+            <td>Hợp để làm môi trường phòng làm việc/lab. Cần recolor nhẹ để khớp UI sci-fi.</td>
+          </tr>
+          <tr>
+            <td><a href="https://kenney.nl/assets/space-shooter-redux">Kenney Space Shooter Redux</a></td>
+            <td>Kenney</td>
+            <td>CC0, free</td>
+            <td>Projectile, laser, enemy shard, icon upgrade, effect vật thể công nghệ</td>
+            <td>Có thể dùng laser/bullet làm CodeBullet hoặc ultimate visual.</td>
+          </tr>
+          <tr>
+            <td><a href="https://kenney.nl/assets/particle-pack">Kenney Particle Pack</a></td>
+            <td>Kenney</td>
+            <td>CC0, free</td>
+            <td>Muzzle flash, enemy death, hit spark, server hit, ultimate pulse</td>
+            <td>Rất hợp với object pool effect đã có trong code.</td>
+          </tr>
+          <tr>
+            <td><a href="https://kenney.nl/assets/interface-sounds">Kenney Interface Sounds</a></td>
+            <td>Kenney</td>
+            <td>CC0, free</td>
+            <td>Hover, click, buy upgrade, continue wave, menu navigation</td>
+            <td>Dùng cho Main Menu và Upgrade Panel để UI có cảm giác hoàn thiện hơn.</td>
+          </tr>
+          <tr>
+            <td><a href="https://kenney.nl/assets/impact-sounds">Kenney Impact Sounds</a></td>
+            <td>Kenney</td>
+            <td>CC0, free</td>
+            <td>Enemy hit, enemy death, server bị đánh, player bị đánh</td>
+            <td>Nên random pitch nhẹ để tránh lặp âm thanh.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Khuyến nghị chọn style</h3>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Nên dùng làm bộ UI chính</h3>
+          <p>
+            Dùng <strong>Space Game GUI kit</strong> làm style chính cho menu, HUD, upgrade panel
+            vì asset này trực tiếp có cảm giác space/sci-fi và đang hợp với concept Build Progress.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Nên dùng làm bộ bổ sung</h3>
+          <p>
+            Dùng <strong>Kenney UI Pack - Sci-Fi</strong> để bổ sung những phần còn thiếu:
+            slider, panel đơn giản, icon nhỏ, placeholder và các thành phần cần license CC0.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="ui">
+      <h2>7. UI/UX Cần Hoàn Thiện</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>HUD trong game</h3>
+          <ul>
+            <li>Góc trái trên: Player HP.</li>
+            <li>Giữa trên: Build Progress + Wave.</li>
+            <li>Góc phải trên: DataPack.</li>
+            <li>Gần server hoặc dưới màn hình: Server HP.</li>
+            <li>Góc trái dưới: Ultimate cooldown.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Upgrade Panel</h3>
+          <ul>
+            <li>Hiện level hiện tại.</li>
+            <li>Hiện chỉ số trước và sau khi mua.</li>
+            <li>Hiện giá DataPack.</li>
+            <li>Upgrade chính nên xoay quanh sát thương, tốc độ bắn và khả năng giữ server sống.</li>
+            <li>Nếu không đủ điểm, hiển thị thiếu bao nhiêu DataPack.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>Win/Lose UI</h3>
+      <p>Màn hình kết quả nên hiện Bugs defeated, DataPack earned, Upgrades purchased, Player deaths, Server HP remaining hoặc Build Progress khi thua.</p>
+    </section>
+
+    <section class="section" id="feel">
+      <h2>8. Effect Và Game Feel</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>Bắn súng</h3>
+          <ul>
+            <li>Muzzle flash tại firePoint.</li>
+            <li>Bullet trail nhẹ.</li>
+            <li>Random pitch âm thanh 0.95-1.05.</li>
+            <li>Camera shake rất nhẹ khi bắn burst.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Enemy hit/death</h3>
+          <ul>
+            <li>Flash sprite khi trúng đạn.</li>
+            <li>Hit particle nhỏ.</li>
+            <li>Death particle riêng cho từng enemy.</li>
+            <li>Popup DataPack: +5, +10, +25.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Server & Ultimate</h3>
+          <ul>
+            <li>Server flash đỏ khi bị đánh.</li>
+            <li>Low HP warning dưới 30%.</li>
+            <li>Ultimate shockwave có glow/sound/camera pulse.</li>
+            <li>Icon ultimate flash khi sẵn sàng.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="balancing">
+      <h2>9. Balancing Và Playtest</h2>
+      <p>Ghi lại dữ liệu mỗi run để cân bằng bằng số liệu thay vì cảm tính.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Run</th>
+            <th>Kết quả</th>
+            <th>Wave kết thúc</th>
+            <th>Server HP</th>
+            <th>Player deaths</th>
+            <th>Bugs killed</th>
+            <th>DataPack earned</th>
+            <th>FPS min</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Win/Lose</td><td>Wave ?</td><td>?</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+        </tbody>
+      </table>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Nếu game quá khó</h3>
+          <ul>
+            <li>Giảm spawn rate.</li>
+            <li>Giảm damageToServer.</li>
+            <li>Tăng Server HP.</li>
+            <li>Tăng DataPack reward.</li>
+            <li>Giảm upgrade cost.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Nếu game quá dễ</h3>
+          <ul>
+            <li>Tăng spawn rate từ Wave 3.</li>
+            <li>Tăng Memory Leak HP/damage.</li>
+            <li>Giảm DataPack reward.</li>
+            <li>Tăng cost CPU/RAM.</li>
+            <li>Tăng ultimate cooldown.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="roadmap">
+      <h2>10. Roadmap Triển Khai</h2>
+      <div class="roadmap">
+        <div class="roadmap-step">
+          <strong>Bước 1</strong>
+          <div>Ổn định gameplay: server ở giữa, enemy lao vào server, test DataPack reward, test nâng sát thương/tốc độ bắn và enemy pool.</div>
+        </div>
+        <div class="roadmap-step">
+          <strong>Bước 2</strong>
+          <div>Làm enemy khác biệt: Syntax nhanh/yếu, Logic zigzag, Memory tank và spawn Sludge.</div>
+        </div>
+        <div class="roadmap-step">
+          <strong>Bước 3</strong>
+          <div>Hoàn thiện UI: HUD rõ hơn, low HP warning, Upgrade Panel đầy đủ, Win/Lose có thống kê.</div>
+        </div>
+        <div class="roadmap-step">
+          <strong>Bước 4</strong>
+          <div>Polish game feel: muzzle flash, hit flash, death effect, camera shake, ultimate polish và audio feedback.</div>
+        </div>
+        <div class="roadmap-step">
+          <strong>Bước 5</strong>
+          <div>Nộp bài: đổi product name, cập nhật README, build Windows/WebGL và quay demo clip 60-90 giây.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="done">
+      <h2>11. Definition Of Done</h2>
+      <ul class="checklist">
+        <li>Main Menu -> Game -> Upgrade -> Win/Lose -> Restart chạy trọn vẹn.</li>
+        <li>Không có runtime error trong Console.</li>
+        <li>Game ổn định với ít nhất 80 enemy active.</li>
+        <li>Mỗi enemy có vai trò riêng và dễ nhận biết.</li>
+        <li>Mỗi upgrade có tác dụng cảm nhận được.</li>
+        <li>UI đủ rõ để người mới tự chơi.</li>
+        <li>Effect và âm thanh phản hồi đủ mọi hành động quan trọng.</li>
+        <li>README có Unity version, controls, objective và cách chạy.</li>
+      </ul>
+    </section>
+
+    <p class="footer">Tài liệu HTML tĩnh - có thể mở trực tiếp bằng trình duyệt hoặc in thành PDF.</p>
+  </main>
+</body>
+</html>

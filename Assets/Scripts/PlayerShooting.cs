@@ -3,15 +3,23 @@ using UnityEngine.Pool;
 
 public class PlayerShooting : MonoBehaviour
 {
+    [Header("Config")]
+    [SerializeField] private WeaponConfig weaponConfig;
+
     [Header("Weapon Settings")]
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private Transform firePoint;
 
+    [Header("Gun Visual")]
+    [SerializeField] private Transform gunPivot;
+
     [Header("Weapon Stats (GDD v3.0 - tuned by UpgradeManager)")]
     [SerializeField] private float fireRate = 0.15f;        // Fire cooldown in seconds. Upgrade RAM lowers this (floor 0.1).
     [SerializeField] private int bulletDamage = 10;         // Damage per bullet. Overclock CPU raises this (+5 / level).
-    [SerializeField] private int bulletsPerShot = 3;        // How many bullets fire at once (1 = single, 3 = tri-shot, 5 = penta-shot, …).
+    [SerializeField] private int bulletsPerShot = 1;        // How many bullets fire at once. Upgrades can raise this to multi-shot.
     [SerializeField] private float spreadAngle = 15f;       // Half-angle of the bullet fan in degrees. Bullets are spread evenly across [-spreadAngle, +spreadAngle].
+    [SerializeField] private int bulletBounces;
+    [SerializeField] private int bulletPierces;
 
     [Header("Recoil")]
     [SerializeField] private float recoilDistance = 0.08f;
@@ -24,13 +32,22 @@ public class PlayerShooting : MonoBehaviour
     private float nextFireTime;
     private IObjectPool<Bullet> bulletPool;
     private Vector3 firePointStartLocalPosition;
+    private Vector2 lastAimDirection = Vector2.right;
 
     void Awake()
     {
-        if (firePoint != null)
+        ApplyConfig();
+
+        if (bulletPrefab == null || !bulletPrefab.TryGetComponent(out Bullet _))
         {
-            firePointStartLocalPosition = firePoint.localPosition;
+            Debug.LogError("PlayerShooting: Bullet Prefab must be assigned and contain a Bullet component.");
+            enabled = false;
+            return;
         }
+
+        ResolveGunPivot();
+        AimGunAtCursor();
+        CacheFirePointRestPosition();
 
         bulletPool = new ObjectPool<Bullet>(
             createFunc: CreateBullet,
@@ -52,10 +69,18 @@ public class PlayerShooting : MonoBehaviour
     // --- Upgrade hooks (GDD v3.0 - Section VI) -------------------------------
     public void SetFireRate(float value) => fireRate = Mathf.Max(0.1f, value);
     public void SetBulletDamage(int value) => bulletDamage = value;
+    public void SetBulletsPerShot(int value) => bulletsPerShot = Mathf.Max(1, value);
+    public void SetBulletBounces(int value) => bulletBounces = Mathf.Max(0, value);
+    public void SetBulletPierces(int value) => bulletPierces = Mathf.Max(0, value);
+    public float FireRate => fireRate;
     public int BulletDamage => bulletDamage; // read by PlayerUltimate so its damage scales with upgrades
+    public int BulletsPerShot => bulletsPerShot;
+    public int BulletBounces => bulletBounces;
+    public int BulletPierces => bulletPierces;
 
     void Update()
     {
+        AimGunAtCursor();
         ReturnRecoilToNormal();
 
         if (Input.GetButton("Fire1") && Time.time >= nextFireTime)
@@ -67,21 +92,25 @@ public class PlayerShooting : MonoBehaviour
 
     void Shoot()
     {
+        if (Camera.main == null)
+        {
+            return;
+        }
+
         // Aim all bullets toward the mouse cursor (screen -> world).
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 lookDirection = mousePos - transform.position;
+        Vector2 lookDirection = GetAimDirection();
         float baseAngle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
 
         Vector3 spawnPosition = firePoint != null ? firePoint.position : transform.position;
 
         // --- Multi-shot fan spread -----------------------------------------
-        // With bulletsPerShot = 1  → fires straight (no spread).
-        // With bulletsPerShot = N  → fires N bullets evenly across
-        //                            [-spreadAngle … +spreadAngle] relative to base aim.
+        // With bulletsPerShot = 1, fires straight with no spread.
+        // With bulletsPerShot = N, fires N bullets evenly across
+        // [-spreadAngle, +spreadAngle] relative to base aim.
         // Examples (spreadAngle = 15):
-        //   N=1 : 0°
-        //   N=3 : -15°, 0°, +15°
-        //   N=5 : -15°, -7.5°, 0°, +7.5°, +15°
+        //   N=1 : 0 degrees
+        //   N=3 : -15, 0, +15 degrees
+        //   N=5 : -15, -7.5, 0, +7.5, +15 degrees
         int count = Mathf.Max(1, bulletsPerShot);
         for (int i = 0; i < count; i++)
         {
@@ -94,6 +123,7 @@ public class PlayerShooting : MonoBehaviour
             Bullet bullet = bulletPool.Get();
             bullet.transform.SetPositionAndRotation(spawnPosition, Quaternion.Euler(0f, 0f, finalAngle));
             bullet.SetDamage(bulletDamage);
+            bullet.SetModifiers(bulletBounces, bulletPierces);
             bullet.Launch();
         }
 
@@ -131,5 +161,99 @@ public class PlayerShooting : MonoBehaviour
             firePoint.localPosition,
             firePointStartLocalPosition,
             recoilReturnSpeed * Time.deltaTime);
+    }
+
+    private void ResolveGunPivot()
+    {
+        if (gunPivot == null)
+        {
+            gunPivot = FindGunChild(transform);
+        }
+    }
+
+    private void AimGunAtCursor()
+    {
+        Vector2 aimDirection = GetAimDirection();
+        float angle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg;
+
+        if (gunPivot != null)
+        {
+            gunPivot.rotation = Quaternion.Euler(0f, 0f, angle);
+        }
+    }
+
+    private static Transform FindGunChild(Transform root)
+    {
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = root.GetChild(i);
+            string childName = child.name.ToLowerInvariant();
+            if (childName.Contains("gun") || childName.Contains("weapon"))
+            {
+                return child;
+            }
+
+            Transform nested = FindGunChild(child);
+            if (nested != null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
+    }
+
+    private Vector2 GetAimDirection()
+    {
+        if (Camera.main == null)
+        {
+            return lastAimDirection;
+        }
+
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 aimDirection = mousePosition - transform.position;
+        if (aimDirection.sqrMagnitude > 0.0001f)
+        {
+            lastAimDirection = aimDirection.normalized;
+        }
+
+        return lastAimDirection;
+    }
+
+    private void CacheFirePointRestPosition()
+    {
+        if (firePoint != null)
+        {
+            firePointStartLocalPosition = firePoint.localPosition;
+        }
+    }
+
+    private void ApplyConfig()
+    {
+        if (weaponConfig == null)
+        {
+            ApplyRunBoosters();
+            return;
+        }
+
+        fireRate = weaponConfig.fireRate;
+        bulletDamage = weaponConfig.bulletDamage;
+        bulletsPerShot = weaponConfig.bulletsPerShot;
+        spreadAngle = weaponConfig.spreadAngle;
+        bulletBounces = weaponConfig.bulletBounces;
+        bulletPierces = weaponConfig.bulletPierces;
+        recoilDistance = weaponConfig.recoilDistance;
+        recoilReturnSpeed = weaponConfig.recoilReturnSpeed;
+        defaultCapacity = weaponConfig.defaultCapacity;
+        maxPoolSize = weaponConfig.maxPoolSize;
+
+        ApplyRunBoosters();
+    }
+
+    private void ApplyRunBoosters()
+    {
+        bulletDamage += RunProgress.StarterDamageBonus;
+        fireRate = Mathf.Max(0.1f, fireRate - RunProgress.StarterFireRateReduction);
+        bulletsPerShot = Mathf.Max(1, bulletsPerShot + RunProgress.ExtraBulletsBonus);
     }
 }

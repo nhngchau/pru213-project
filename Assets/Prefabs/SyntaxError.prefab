@@ -85,7 +85,7 @@ SpriteRenderer:
   m_SortingOrder: 10
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4505236445417564542, guid: 114764b118253034e8cbd7e9fc10474d, type: 3}
-  m_Color: {r: 0.20784312, g: 0.39790672, b: 0.79607844, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -169,17 +169,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f85faf15c2a226f478d12fe2c3ab808c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBehavior
-  maxHP: 20
-  moveSpeed: 3
-  dataPackValue: 5
-  detectionRadius: 4.5
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 8
-  bodyRadius: 0.3
-  lookAhead: 0.9
-  avoidAngleStep: 25
-  maxAvoidAngle: 100
-  damagePerSecond: 10
-  damageTickInterval: 1
-  onDeathEffectPrefab: {fileID: 0}
+  config: {fileID: 11400000, guid: d67fa05af1d24a6c8be8e0c7c0c12301, type: 2}
+  anim: {fileID: 0}
