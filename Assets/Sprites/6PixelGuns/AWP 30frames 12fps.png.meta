@@ -1,0 +1,897 @@
+fileFormatVersion: 2
+guid: 6eb82eefce043484a85e6c39593779c9
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -9196951325505323163
+    second: AWP 30frames 12fps_0
+  - first:
+      213: 963737865090184871
+    second: AWP 30frames 12fps_1
+  - first:
+      213: -6440611632505831030
+    second: AWP 30frames 12fps_2
+  - first:
+      213: -5882612286332510568
+    second: AWP 30frames 12fps_3
+  - first:
+      213: 6911981905248823075
+    second: AWP 30frames 12fps_4
+  - first:
+      213: 4296658685498812668
+    second: AWP 30frames 12fps_5
+  - first:
+      213: -8080218181250368015
+    second: AWP 30frames 12fps_6
+  - first:
+      213: -7783096939281136416
+    second: AWP 30frames 12fps_7
+  - first:
+      213: -9078557892660403151
+    second: AWP 30frames 12fps_8
+  - first:
+      213: 6626541078237487171
+    second: AWP 30frames 12fps_9
+  - first:
+      213: 1453323825200684523
+    second: AWP 30frames 12fps_10
+  - first:
+      213: -5059028725865570563
+    second: AWP 30frames 12fps_11
+  - first:
+      213: 2545543778857797618
+    second: AWP 30frames 12fps_12
+  - first:
+      213: -7405911846519258362
+    second: AWP 30frames 12fps_13
+  - first:
+      213: 8575430865151382517
+    second: AWP 30frames 12fps_14
+  - first:
+      213: -2566272934486457143
+    second: AWP 30frames 12fps_15
+  - first:
+      213: -7723403924657546675
+    second: AWP 30frames 12fps_16
+  - first:
+      213: 3378434033695612446
+    second: AWP 30frames 12fps_17
+  - first:
+      213: -7140911373763007332
+    second: AWP 30frames 12fps_18
+  - first:
+      213: 3663447156530505659
+    second: AWP 30frames 12fps_19
+  - first:
+      213: 6046993665656469345
+    second: AWP 30frames 12fps_20
+  - first:
+      213: 1310806245209069824
+    second: AWP 30frames 12fps_21
+  - first:
+      213: -7559603811203849261
+    second: AWP 30frames 12fps_22
+  - first:
+      213: -2391091735379688071
+    second: AWP 30frames 12fps_23
+  - first:
+      213: -8521812417685621672
+    second: AWP 30frames 12fps_24
+  - first:
+      213: -3278306653662971790
+    second: AWP 30frames 12fps_25
+  - first:
+      213: -846498431786705283
+    second: AWP 30frames 12fps_26
+  - first:
+      213: 8108353515050771559
+    second: AWP 30frames 12fps_27
+  - first:
+      213: 4228955776755429746
+    second: AWP 30frames 12fps_28
+  - first:
+      213: 7550708940315752575
+    second: AWP 30frames 12fps_29
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 292
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56f72ba3f7ddd5080800000000000000
+      internalID: -9196951325505323163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_1
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 292
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a63b417b72ef5d00800000000000000
+      internalID: 963737865090184871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_2
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 292
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a81cd3418d95e96a0800000000000000
+      internalID: -6440611632505831030
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_3
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 260
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89e5dc10b43cc5ea0800000000000000
+      internalID: -5882612286332510568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_4
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 260
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 327a84cebea4cef50800000000000000
+      internalID: 6911981905248823075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_5
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 260
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf8e04e4f4cc0ab30800000000000000
+      internalID: 4296658685498812668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_6
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 228
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fd3beeff5c4ddf80800000000000000
+      internalID: -8080218181250368015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_7
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 228
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e4c7b10292ecf390800000000000000
+      internalID: -7783096939281136416
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_8
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 228
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 134682762bb720280800000000000000
+      internalID: -9078557892660403151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_9
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 196
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34021e1700436fb50800000000000000
+      internalID: 6626541078237487171
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_10
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 196
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bedd2b8a15e3b2410800000000000000
+      internalID: 1453323825200684523
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_11
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 196
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dfe194e7d28bac9b0800000000000000
+      internalID: -5059028725865570563
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_12
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 164
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f7460b7496935320800000000000000
+      internalID: 2545543778857797618
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_13
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 164
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 603cc5ee96ae83990800000000000000
+      internalID: -7405911846519258362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_14
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 164
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f3d441ffec020770800000000000000
+      internalID: 8575430865151382517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_15
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 132
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c44c3fdc54c26cd0800000000000000
+      internalID: -2566272934486457143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_16
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 132
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d4adde50d05f0d490800000000000000
+      internalID: -7723403924657546675
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_17
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 132
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1e548b9adb92ee20800000000000000
+      internalID: 3378434033695612446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_18
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 100
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9c2f4290f266ec90800000000000000
+      internalID: -7140911373763007332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_19
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 100
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb76a6277cd27d230800000000000000
+      internalID: 3663447156530505659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_20
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 100
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 167bd7853bc3be350800000000000000
+      internalID: 6046993665656469345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_21
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 68
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 009dc07c55be03210800000000000000
+      internalID: 1310806245209069824
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_22
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 68
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d3618ed264e61790800000000000000
+      internalID: -7559603811203849261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_23
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 68
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97542573cb221ded0800000000000000
+      internalID: -2391091735379688071
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_24
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 36
+        width: 75
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 854f551b1c07cb980800000000000000
+      internalID: -8521812417685621672
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_25
+      rect:
+        serializedVersion: 2
+        x: 89
+        y: 36
+        width: 76
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2787e9bb77d1182d0800000000000000
+      internalID: -3278306653662971790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_26
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 36
+        width: 77
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7e9d664922a044f0800000000000000
+      internalID: -846498431786705283
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_27
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 4
+        width: 77
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76424e1ef88a68070800000000000000
+      internalID: 8108353515050771559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_28
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 4
+        width: 76
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 271f75c7fd440ba30800000000000000
+      internalID: 4228955776755429746
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AWP 30frames 12fps_29
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 4
+        width: 75
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f78f2ed96c189c860800000000000000
+      internalID: 7550708940315752575
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      AWP 30frames 12fps_0: -9196951325505323163
+      AWP 30frames 12fps_1: 963737865090184871
+      AWP 30frames 12fps_10: 1453323825200684523
+      AWP 30frames 12fps_11: -5059028725865570563
+      AWP 30frames 12fps_12: 2545543778857797618
+      AWP 30frames 12fps_13: -7405911846519258362
+      AWP 30frames 12fps_14: 8575430865151382517
+      AWP 30frames 12fps_15: -2566272934486457143
+      AWP 30frames 12fps_16: -7723403924657546675
+      AWP 30frames 12fps_17: 3378434033695612446
+      AWP 30frames 12fps_18: -7140911373763007332
+      AWP 30frames 12fps_19: 3663447156530505659
+      AWP 30frames 12fps_2: -6440611632505831030
+      AWP 30frames 12fps_20: 6046993665656469345
+      AWP 30frames 12fps_21: 1310806245209069824
+      AWP 30frames 12fps_22: -7559603811203849261
+      AWP 30frames 12fps_23: -2391091735379688071
+      AWP 30frames 12fps_24: -8521812417685621672
+      AWP 30frames 12fps_25: -3278306653662971790
+      AWP 30frames 12fps_26: -846498431786705283
+      AWP 30frames 12fps_27: 8108353515050771559
+      AWP 30frames 12fps_28: 4228955776755429746
+      AWP 30frames 12fps_29: 7550708940315752575
+      AWP 30frames 12fps_3: -5882612286332510568
+      AWP 30frames 12fps_4: 6911981905248823075
+      AWP 30frames 12fps_5: 4296658685498812668
+      AWP 30frames 12fps_6: -8080218181250368015
+      AWP 30frames 12fps_7: -7783096939281136416
+      AWP 30frames 12fps_8: -9078557892660403151
+      AWP 30frames 12fps_9: 6626541078237487171
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
