@@ -5,6 +5,7 @@ public class RunSaveData : ScriptableObject
 {
     [SerializeField] private bool hasSave;
     [SerializeField] private int stage = 1;
+    [SerializeField] private int bestStage = 1;
     [SerializeField] private int dataPack;
     [SerializeField] private int starterDamageLevel;
     [SerializeField] private int starterFireRateLevel;
@@ -13,6 +14,7 @@ public class RunSaveData : ScriptableObject
 
     public bool HasSave => hasSave;
     public int Stage => stage;
+    public int BestStage => bestStage;
     public int DataPack => dataPack;
     public int StarterDamageLevel => starterDamageLevel;
     public int StarterFireRateLevel => starterFireRateLevel;
@@ -23,6 +25,7 @@ public class RunSaveData : ScriptableObject
     {
         hasSave = true;
         stage = Mathf.Max(1, runStage);
+        bestStage = Mathf.Max(bestStage, stage); // chỉ cập nhật nếu cao hơn record cũ
         dataPack = Mathf.Max(0, runDataPack);
         starterDamageLevel = Mathf.Max(0, damageLevel);
         starterFireRateLevel = Mathf.Max(0, fireRateLevel);
@@ -34,6 +37,7 @@ public class RunSaveData : ScriptableObject
     {
         hasSave = false;
         stage = 1;
+        // bestStage không bị xóa khi reset — đây là kỷ lục vĩnh viễn
         dataPack = 0;
         starterDamageLevel = 0;
         starterFireRateLevel = 0;

@@ -228,6 +228,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
 
         // --- Damage the Player on contact ---
         // Uses IDamageable so it works with PlayerHealth without a hard reference.
+        // Enemy disappears immediately after hitting the player (same behaviour as hitting the Server).
         if (collision.CompareTag("Player"))
         {
             if (Time.time >= nextDamageTime)
@@ -235,7 +236,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
                 if (collision.TryGetComponent(out IDamageable player))
                 {
                     player.TakeDamage(GetScaledDamage(config.damageToPlayer));
-                    nextDamageTime = Time.time + config.damageInterval;
+                    Die(false); // Enemy plays death animation and disappears on player contact
                 }
             }
         }

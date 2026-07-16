@@ -21,6 +21,7 @@ public static class RunProgress
 
     public static int Stage { get; private set; } = 1;
     public static int DataPack { get; private set; }
+    public static int BestStage => GetSaveData().BestStage; // kỷ lục stage cao nhất từng đạt
     public static int StarterDamageLevel { get; private set; }
     public static int StarterFireRateLevel { get; private set; }
     public static int ServerArmorLevel { get; private set; }
