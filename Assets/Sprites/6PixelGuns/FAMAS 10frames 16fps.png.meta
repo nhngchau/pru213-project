@@ -64,7 +64,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -102,7 +102,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -130,12 +130,12 @@ TextureImporter:
       name: FAMAS 10frames 16fps_0
       rect:
         serializedVersion: 2
-        x: 5
-        y: 129
-        width: 58
-        height: 26
+        x: 6
+        y: 130
+        width: 56
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -152,12 +152,12 @@ TextureImporter:
       name: FAMAS 10frames 16fps_1
       rect:
         serializedVersion: 2
-        x: 70
-        y: 129
-        width: 58
-        height: 26
+        x: 71
+        y: 130
+        width: 56
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -174,12 +174,12 @@ TextureImporter:
       name: FAMAS 10frames 16fps_2
       rect:
         serializedVersion: 2
-        x: 5
-        y: 97
-        width: 58
-        height: 26
+        x: 6
+        y: 98
+        width: 56
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -196,12 +196,12 @@ TextureImporter:
       name: FAMAS 10frames 16fps_3
       rect:
         serializedVersion: 2
-        x: 70
-        y: 97
-        width: 58
-        height: 26
+        x: 71
+        y: 98
+        width: 56
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -218,12 +218,12 @@ TextureImporter:
       name: FAMAS 10frames 16fps_4
       rect:
         serializedVersion: 2
-        x: 2
-        y: 65
-        width: 63
-        height: 26
+        x: 3
+        y: 66
+        width: 61
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -240,12 +240,12 @@ TextureImporter:
       name: FAMAS 10frames 16fps_5
       rect:
         serializedVersion: 2
-        x: 68
-        y: 65
-        width: 61
-        height: 26
+        x: 69
+        y: 66
+        width: 59
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -262,12 +262,12 @@ TextureImporter:
       name: FAMAS 10frames 16fps_6
       rect:
         serializedVersion: 2
-        x: 2
-        y: 33
-        width: 63
-        height: 26
+        x: 3
+        y: 34
+        width: 61
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -284,12 +284,12 @@ TextureImporter:
       name: FAMAS 10frames 16fps_7
       rect:
         serializedVersion: 2
-        x: 68
-        y: 33
-        width: 61
-        height: 26
+        x: 69
+        y: 34
+        width: 59
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -306,12 +306,12 @@ TextureImporter:
       name: FAMAS 10frames 16fps_8
       rect:
         serializedVersion: 2
-        x: 2
-        y: 1
-        width: 63
-        height: 26
+        x: 3
+        y: 2
+        width: 61
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -328,12 +328,12 @@ TextureImporter:
       name: FAMAS 10frames 16fps_9
       rect:
         serializedVersion: 2
-        x: 68
-        y: 1
-        width: 61
-        height: 26
+        x: 69
+        y: 2
+        width: 59
+        height: 24
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -350,7 +350,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 934d758d791aec84b9d32916effaaa67
     internalID: 0
     vertices: []
     indices: 
@@ -358,7 +358,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       FAMAS 10frames 16fps_0: 5115926950526378355
       FAMAS 10frames 16fps_1: 7845868203017228488
