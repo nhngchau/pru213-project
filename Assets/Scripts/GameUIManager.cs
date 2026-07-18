@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityScreenNavigator.Runtime.Core.Modal;
 
@@ -30,7 +32,20 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private GameObject shopPanel;
     [SerializeField] private GameObject pausePanel;
 
-    private bool hasOpenModal;
+    private enum ModalOpType { Push, Pop }
+
+    private struct ModalOp
+    {
+        public ModalOpType Type;
+        public string ResourceKey;
+        public GameObject FallbackPanel;
+    }
+
+    // All navigator Push/Pop calls funnel through this queue so we never start a
+    // transition while another is still running (which throws "already in transition"
+    // and leaves Time.timeScale stuck at 0, freezing the game).
+    private readonly Queue<ModalOp> modalOps = new Queue<ModalOp>();
+    private Coroutine modalWorker;
 
     private void Awake()
     {
@@ -71,13 +86,7 @@ public class GameUIManager : MonoBehaviour
 
     public void CloseTopModal()
     {
-        if (modalContainer != null && hasOpenModal)
-        {
-            modalContainer.Pop(playAnimations).OnTerminate += () => hasOpenModal = false;
-            return;
-        }
-
-        HideLegacyPanels();
+        EnqueueModalOp(new ModalOp { Type = ModalOpType.Pop });
     }
 
     public void ShowShop()
@@ -126,19 +135,75 @@ public class GameUIManager : MonoBehaviour
 
     private void ShowScreen(string resourceKey, GameObject fallbackPanel)
     {
-        ResolveModalContainer();
-
-        if (CanShowWithNavigator(resourceKey))
+        EnqueueModalOp(new ModalOp
         {
-            hasOpenModal = true;
-            modalContainer.Push(resourceKey, playAnimations).OnTerminate += () => { };
+            Type = ModalOpType.Push,
+            ResourceKey = resourceKey,
+            FallbackPanel = fallbackPanel,
+        });
+    }
+
+    private void EnqueueModalOp(ModalOp op)
+    {
+        modalOps.Enqueue(op);
+        if (modalWorker == null)
+        {
+            modalWorker = StartCoroutine(ProcessModalOps());
+        }
+    }
+
+    // Serialises modal transitions: wait for the container to be idle, run one op,
+    // wait for it to finish, then move on. "yield return null" ticks even at
+    // timeScale 0 and the navigator animates on unscaled time, so this never deadlocks.
+    private IEnumerator ProcessModalOps()
+    {
+        while (modalOps.Count > 0)
+        {
+            ResolveModalContainer();
+
+            while (modalContainer != null && modalContainer.IsInTransition)
+            {
+                yield return null;
+            }
+
+            ExecuteModalOp(modalOps.Dequeue());
+
+            yield return null;
+            while (modalContainer != null && modalContainer.IsInTransition)
+            {
+                yield return null;
+            }
+        }
+
+        modalWorker = null;
+    }
+
+    private void ExecuteModalOp(ModalOp op)
+    {
+        if (op.Type == ModalOpType.Push)
+        {
+            if (CanShowWithNavigator(op.ResourceKey))
+            {
+                modalContainer.Push(op.ResourceKey, playAnimations);
+                return;
+            }
+
+            if (op.FallbackPanel != null)
+            {
+                op.FallbackPanel.SetActive(true);
+            }
+
             return;
         }
 
-        if (fallbackPanel != null)
+        // Pop: close the top navigator modal, or fall back to hiding legacy panels.
+        if (modalContainer != null && modalContainer.OrderedModalIds.Count > 0)
         {
-            fallbackPanel.SetActive(true);
+            modalContainer.Pop(playAnimations);
+            return;
         }
+
+        HideLegacyPanels();
     }
 
     private void ResolveModalContainer()

@@ -191,10 +191,19 @@ public class UpgradePanelUI : Modal
     {
         if (closeNavigatorModalOnContinue)
         {
-            ModalContainer container = ModalContainer.Of(transform);
-            if (container != null)
+            // Route the pop through GameUIManager's serialized queue so it can't
+            // overlap another modal transition (which throws "already in transition").
+            if (GameUIManager.HasInstance)
             {
-                container.Pop(true);
+                GameUIManager.Instance.CloseTopModal();
+            }
+            else
+            {
+                ModalContainer container = ModalContainer.Of(transform);
+                if (container != null && !container.IsInTransition)
+                {
+                    container.Pop(true);
+                }
             }
         }
 
