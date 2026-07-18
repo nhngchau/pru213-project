@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ServerCore : MonoBehaviour
+public class ServerCore : MonoBehaviour, IDamageable
 {
     [Header("Server Settings")]
     [SerializeField] private int maxHP = 1000;
@@ -11,6 +11,7 @@ public class ServerCore : MonoBehaviour
 
     void Start()
     {
+        maxHP += RunProgress.ServerHpBonus;
         currentHP = maxHP;
 
         if (hpSlider != null)
@@ -18,6 +19,23 @@ public class ServerCore : MonoBehaviour
             hpSlider.maxValue = maxHP;
             hpSlider.value = currentHP;
         }
+
+        RaiseHealthChanged();
+    }
+
+    // GDD v3.0 - Firewall System upgrade: serverMaxHP += 100; serverCurrentHP += 100;
+    public void IncreaseMaxHP(int amount)
+    {
+        maxHP += amount;
+        currentHP += amount;
+
+        if (hpSlider != null)
+        {
+            hpSlider.maxValue = maxHP;
+            hpSlider.value = currentHP;
+        }
+
+        RaiseHealthChanged();
     }
 
     public void TakeDamage(int damage)
@@ -29,6 +47,8 @@ public class ServerCore : MonoBehaviour
 
         currentHP -= damage;
 
+        GameAudioManager.Instance?.PlayServerHit();
+
         if (currentHP < 0)
         {
             currentHP = 0;
@@ -38,6 +58,8 @@ public class ServerCore : MonoBehaviour
         {
             hpSlider.value = currentHP;
         }
+
+        RaiseHealthChanged();
 
         Debug.Log("Server HP: " + currentHP + "/" + maxHP);
 
@@ -53,5 +75,10 @@ public class ServerCore : MonoBehaviour
                 Time.timeScale = 0f;
             }
         }
+    }
+
+    private void RaiseHealthChanged()
+    {
+        GameEvents.RaiseServerHealthChanged(currentHP, maxHP);
     }
 }

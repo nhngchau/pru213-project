@@ -1,11 +1,13 @@
 using UnityEngine;
 
+/// <summary>
+/// Game end-state owner (GDD v3.0): win / lose flags. The Build Progress
+/// timeline now lives in WaveManager, which calls TriggerWin() on the final wave; ServerCore
+/// calls TriggerGameOver() when the Server dies.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-
-    [Header("Build Progress")]
-    [SerializeField] private float buildDuration = 60f;
 
     [Header("Game Over UI")]
     [SerializeField] private GameObject gameOverPanel;
@@ -14,7 +16,7 @@ public class GameManager : MonoBehaviour
     public bool IsGameOver { get; private set; }
     public bool IsGameWon { get; private set; }
     public bool IsGameEnded => IsGameOver || IsGameWon;
-    public float BuildProgressPercent { get; private set; }
+    public bool IsPaused { get; private set; }
 
     void Awake()
     {
@@ -29,10 +31,10 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        PlayerProgression.EnsureExistsForCurrentScene();
         Time.timeScale = 1f;
         IsGameOver = false;
         IsGameWon = false;
-        BuildProgressPercent = 0f;
 
         if (gameOverPanel != null)
         {
@@ -45,34 +47,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        if (IsGameEnded)
-        {
-            return;
-        }
-
-        IncreaseBuildProgress();
-    }
-
-    private void IncreaseBuildProgress()
-    {
-        if (buildDuration <= 0f)
-        {
-            BuildProgressPercent = 100f;
-        }
-        else
-        {
-            BuildProgressPercent += (Time.deltaTime / buildDuration) * 100f;
-            BuildProgressPercent = Mathf.Clamp(BuildProgressPercent, 0f, 100f);
-        }
-
-        if (BuildProgressPercent >= 100f)
-        {
-            TriggerWin();
-        }
-    }
-
     public void TriggerGameOver()
     {
         if (IsGameEnded)
@@ -81,14 +55,17 @@ public class GameManager : MonoBehaviour
         }
 
         IsGameOver = true;
+        GameAudioManager.Instance?.PlayGameOver();
         Time.timeScale = 0f;
+        GameEvents.RaiseGameOver();
 
-        if (gameOverPanel != null)
+        if (!GameUIManager.HasInstance && gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
         }
 
-        Debug.Log("Game Over!");
+        // GDD: Lose Condition shows the "System Crashed" panel (gameOverPanel).
+        Debug.Log("System Crashed! The central server has been destroyed.");
     }
 
     public void TriggerWin()
@@ -99,13 +76,24 @@ public class GameManager : MonoBehaviour
         }
 
         IsGameWon = true;
+        GameAudioManager.Instance?.PlayWin();
         Time.timeScale = 0f;
+        GameEvents.RaiseGameWon();
 
-        if (winPanel != null)
+        if (!GameUIManager.HasInstance && winPanel != null)
         {
             winPanel.SetActive(true);
         }
 
         Debug.Log("Build Complete! You Win!");
+    }
+
+    public void TogglePause()
+    {
+        if (IsGameEnded) return;
+
+        IsPaused = !IsPaused;
+        Time.timeScale = IsPaused ? 0f : 1f;
+        GameEvents.RaiseGamePaused(IsPaused);
     }
 }
