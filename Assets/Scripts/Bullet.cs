@@ -12,7 +12,7 @@ public class Bullet : MonoBehaviour
     private Rigidbody2D rb;
     private IObjectPool<Bullet> pool;
     private bool isReleased;
-    private int remainingBounces;
+    private float explosionRadius;
     private int remainingPierces;
 
     void Awake()
@@ -32,9 +32,9 @@ public class Bullet : MonoBehaviour
         damage = value;
     }
 
-    public void SetModifiers(int bounces, int pierces)
+    public void SetModifiers(float explosiveRad, int pierces)
     {
-        remainingBounces = Mathf.Max(0, bounces);
+        explosionRadius = Mathf.Max(0f, explosiveRad);
         remainingPierces = Mathf.Max(0, pierces);
     }
 
@@ -53,30 +53,31 @@ public class Bullet : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (remainingBounces > 0 && IsBounceSurface(collision.gameObject))
-        {
-            Reflect(collision);
-            return;
-        }
-
-        // Code Bullets only ever damage Bugs (GDD). Decoupled via IDamageable; the "Enemy" tag
-        // gate keeps bullets from ever damaging the Player or the Server.
+        // Hit enemy logic
         if (!collision.CompareTag("Enemy"))
         {
+            // If it hits a wall/obstacle, it should just explode or disappear
+            if (IsBounceSurface(collision.gameObject))
+            {
+                Explode();
+                ReturnToPool();
+            }
             return;
         }
 
+        // Direct damage to the hit enemy
         if (collision.TryGetComponent(out IDamageable target))
         {
             target.TakeDamage(damage);
         }
 
-        if (remainingBounces > 0)
+        // Explode if we have explosive radius
+        if (explosionRadius > 0f)
         {
-            Reflect(collision);
-            return;
+            Explode();
         }
 
+        // Piercing logic
         if (remainingPierces > 0)
         {
             remainingPierces--;
@@ -86,16 +87,29 @@ public class Bullet : MonoBehaviour
         ReturnToPool();
     }
 
+    private void Explode()
+    {
+        if (explosionRadius <= 0f) return;
+
+        // Deal AoE damage to all nearby enemies (excluding the one we just hit directly, though it's fine if they take double damage from explosion, let's just do full AoE)
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
+        foreach (var col in hitEnemies)
+        {
+            if (col.CompareTag("Enemy") && col.TryGetComponent(out IDamageable target))
+            {
+                // Deal explosion damage (could be full damage or partial, let's do full)
+                target.TakeDamage(damage);
+            }
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (remainingBounces <= 0 || !IsBounceSurface(collision.gameObject))
+        if (IsBounceSurface(collision.gameObject))
         {
+            Explode();
             ReturnToPool();
-            return;
         }
-
-        Vector2 normal = collision.contactCount > 0 ? collision.GetContact(0).normal : -rb.linearVelocity.normalized;
-        Reflect(normal);
     }
 
     private bool IsBounceSurface(GameObject other)
@@ -103,27 +117,6 @@ public class Bullet : MonoBehaviour
         return other.CompareTag("Wall")
             || other.CompareTag("Obstacle")
             || other.layer == LayerMask.NameToLayer(bounceLayerName);
-    }
-
-    private void Reflect(Collider2D collision)
-    {
-        Vector2 closestPoint = collision.ClosestPoint(transform.position);
-        Vector2 normal = ((Vector2)transform.position - closestPoint).normalized;
-
-        if (normal.sqrMagnitude <= 0.001f)
-        {
-            normal = -rb.linearVelocity.normalized;
-        }
-
-        Reflect(normal);
-    }
-
-    private void Reflect(Vector2 normal)
-    {
-        remainingBounces--;
-        Vector2 reflectedVelocity = Vector2.Reflect(rb.linearVelocity.normalized, normal) * speed;
-        rb.linearVelocity = reflectedVelocity;
-        transform.right = reflectedVelocity.normalized;
     }
 
     /// <summary>

@@ -12,13 +12,14 @@ public class PlayerShooting : MonoBehaviour
 
     [Header("Gun Visual")]
     [SerializeField] private Transform gunPivot;
+    [SerializeField] private Transform playerVisual; // Object chứa hình ảnh nhân vật
 
     [Header("Weapon Stats (GDD v3.0 - tuned by UpgradeManager)")]
     [SerializeField] private float fireRate = 0.15f;        // Fire cooldown in seconds. Upgrade RAM lowers this (floor 0.1).
     [SerializeField] private int bulletDamage = 10;         // Damage per bullet. Overclock CPU raises this (+5 / level).
     [SerializeField] private int bulletsPerShot = 1;        // How many bullets fire at once. Upgrades can raise this to multi-shot.
     [SerializeField] private float spreadAngle = 15f;       // Half-angle of the bullet fan in degrees. Bullets are spread evenly across [-spreadAngle, +spreadAngle].
-    [SerializeField] private int bulletBounces;
+    [SerializeField] private float explosionRadius;
     [SerializeField] private int bulletPierces;
 
     [Header("Recoil")]
@@ -46,6 +47,7 @@ public class PlayerShooting : MonoBehaviour
         }
 
         ResolveGunPivot();
+        ResolvePlayerVisual();
         AimGunAtCursor();
         CacheFirePointRestPosition();
 
@@ -70,12 +72,12 @@ public class PlayerShooting : MonoBehaviour
     public void SetFireRate(float value) => fireRate = Mathf.Max(0.1f, value);
     public void SetBulletDamage(int value) => bulletDamage = value;
     public void SetBulletsPerShot(int value) => bulletsPerShot = Mathf.Max(1, value);
-    public void SetBulletBounces(int value) => bulletBounces = Mathf.Max(0, value);
+    public void SetExplosionRadius(float value) => explosionRadius = Mathf.Max(0f, value);
     public void SetBulletPierces(int value) => bulletPierces = Mathf.Max(0, value);
     public float FireRate => fireRate;
     public int BulletDamage => bulletDamage; // read by PlayerUltimate so its damage scales with upgrades
     public int BulletsPerShot => bulletsPerShot;
-    public int BulletBounces => bulletBounces;
+    public float ExplosionRadius => explosionRadius;
     public int BulletPierces => bulletPierces;
 
     void Update()
@@ -123,7 +125,7 @@ public class PlayerShooting : MonoBehaviour
             Bullet bullet = bulletPool.Get();
             bullet.transform.SetPositionAndRotation(spawnPosition, Quaternion.Euler(0f, 0f, finalAngle));
             bullet.SetDamage(bulletDamage);
-            bullet.SetModifiers(bulletBounces, bulletPierces);
+            bullet.SetModifiers(explosionRadius, bulletPierces);
             bullet.Launch();
         }
 
@@ -171,14 +173,36 @@ public class PlayerShooting : MonoBehaviour
         }
     }
 
+    private void ResolvePlayerVisual()
+    {
+        if (playerVisual == null)
+        {
+            // Tự động tìm object tên PlayerVisual theo hình bạn chụp
+            Transform visual = transform.Find("PlayerVisual");
+            if (visual != null)
+            {
+                playerVisual = visual;
+            }
+        }
+    }
+
     private void AimGunAtCursor()
     {
         Vector2 aimDirection = GetAimDirection();
         float angle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg;
+        bool isAimingLeft = Mathf.Abs(angle) > 90f; // Nhắm sang trái khi góc > 90 hoặc < -90
 
         if (gunPivot != null)
         {
             gunPivot.rotation = Quaternion.Euler(0f, 0f, angle);
+            // Lật súng lại để không bị chổng ngược
+            gunPivot.localScale = new Vector3(gunPivot.localScale.x, isAimingLeft ? -1f : 1f, gunPivot.localScale.z);
+        }
+
+        if (playerVisual != null)
+        {
+            // Lật mặt nhân vật sang trái/phải tương ứng
+            playerVisual.localScale = new Vector3(isAimingLeft ? -1f : 1f, playerVisual.localScale.y, playerVisual.localScale.z);
         }
     }
 
@@ -240,7 +264,7 @@ public class PlayerShooting : MonoBehaviour
         bulletDamage = weaponConfig.bulletDamage;
         bulletsPerShot = weaponConfig.bulletsPerShot;
         spreadAngle = weaponConfig.spreadAngle;
-        bulletBounces = weaponConfig.bulletBounces;
+        explosionRadius = 0f; // Reset, config doesn't have explosionRadius yet, or we can add it later if needed
         bulletPierces = weaponConfig.bulletPierces;
         recoilDistance = weaponConfig.recoilDistance;
         recoilReturnSpeed = weaponConfig.recoilReturnSpeed;

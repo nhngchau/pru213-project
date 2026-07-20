@@ -46,10 +46,16 @@ public static class GameEvents
     // --- End State ------------------------------------------------------
     /// <summary>The central server was destroyed; UI should show the lose screen.</summary>
     public static event Action OnGameOver;
-    /// <summary>Build Progress reached 100%; UI should show the win screen.</summary>
+    /// <summary>Build Progress reached 100% (stage cleared); UI shows win/shop screen.</summary>
     public static event Action OnGameWon;
+    /// <summary>Player cleared Stage 10 — thắng toàn bộ game!</summary>
+    public static event Action OnGameCompleted;
     /// <summary>Game pause state toggled.</summary>
     public static event Action<bool> OnGamePaused;
+
+    // --- Milestone -------------------------------------------------------
+    /// <summary>Hoàn thành stage là bội số của 3 (3,6,9...); args = stage vừa qua, DataPack thưởng.</summary>
+    public static event Action<int, int> OnMilestoneReached;
 
     public static void RaiseDataPackAwarded(int amount) => OnDataPackAwarded?.Invoke(amount);
     public static void RaiseDataPackChanged(int total) => OnDataPackChanged?.Invoke(total);
@@ -63,9 +69,11 @@ public static class GameEvents
     public static void RaiseContinueRequested() => OnContinueRequested?.Invoke();
     public static void RaiseGameOver() => OnGameOver?.Invoke();
     public static void RaiseGameWon() => OnGameWon?.Invoke();
+    public static void RaiseGameCompleted() => OnGameCompleted?.Invoke();
 
     public static void RaiseDamageTaken(UnityEngine.Vector3 pos, int damage) => OnDamageTaken?.Invoke(pos, damage);
     public static void RaiseEnemyDied(UnityEngine.Vector3 pos) => OnEnemyDied?.Invoke(pos);
     public static void RaiseServerHealthChanged(int current, int max) => OnServerHealthChanged?.Invoke(current, max);
+    public static void RaiseMilestoneReached(int stage, int bonus) => OnMilestoneReached?.Invoke(stage, bonus);
     public static void RaiseGamePaused(bool isPaused) => OnGamePaused?.Invoke(isPaused);
 }

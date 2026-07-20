@@ -55,18 +55,20 @@ public class GameUIManager : MonoBehaviour
 
     private void OnEnable()
     {
-        GameEvents.OnLevelUpReady += ShowLevelUp;
-        GameEvents.OnGameOver += ShowGameOver;
-        GameEvents.OnGameWon += ShowWin;
-        GameEvents.OnGamePaused += HandleGamePaused;
+        GameEvents.OnLevelUpReady   += ShowLevelUp;
+        GameEvents.OnGameOver       += ShowGameOver;
+        GameEvents.OnGameWon        += ShowWin;
+        GameEvents.OnGameCompleted  += ShowGameCompleted;
+        GameEvents.OnGamePaused     += HandleGamePaused;
     }
 
     private void OnDisable()
     {
-        GameEvents.OnLevelUpReady -= ShowLevelUp;
-        GameEvents.OnGameOver -= ShowGameOver;
-        GameEvents.OnGameWon -= ShowWin;
-        GameEvents.OnGamePaused -= HandleGamePaused;
+        GameEvents.OnLevelUpReady   -= ShowLevelUp;
+        GameEvents.OnGameOver       -= ShowGameOver;
+        GameEvents.OnGameWon        -= ShowWin;
+        GameEvents.OnGameCompleted  -= ShowGameCompleted;
+        GameEvents.OnGamePaused     -= HandleGamePaused;
     }
 
     public void CloseTopModal()
@@ -103,7 +105,19 @@ public class GameUIManager : MonoBehaviour
 
     private void ShowWin()
     {
+        // Thắng stage thường → mở Shop để chuẩn bị stage tiếp theo
         ShowShop();
+    }
+
+    private void ShowGameCompleted()
+    {
+        // Clear Stage 10 → thắng toàn bộ game!
+        // Xóa save để lần sau bắt đầu mới
+        RunProgress.ClearSavedRun();
+        UnityEngine.Debug.Log("[GameUIManager] GAME COMPLETED! Player cleared all 10 stages!");
+
+        // Hiện WinModal nếu có, fallback về winPanel
+        ShowScreen(winModalKey, winPanel);
     }
 
     private void HandleGamePaused(bool isPaused)

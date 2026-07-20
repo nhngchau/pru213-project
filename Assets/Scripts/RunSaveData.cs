@@ -1,47 +1,96 @@
 using UnityEngine;
 
+/// <summary>
+/// Lưu tiến trình run bằng PlayerPrefs — hoạt động cả trong Editor lẫn build .exe.
+/// </summary>
 [CreateAssetMenu(fileName = "RunSaveData", menuName = "The Senior Defender/Run Save Data")]
 public class RunSaveData : ScriptableObject
 {
-    [SerializeField] private bool hasSave;
-    [SerializeField] private int stage = 1;
-    [SerializeField] private int bestStage = 1;
-    [SerializeField] private int dataPack;
-    [SerializeField] private int starterDamageLevel;
-    [SerializeField] private int starterFireRateLevel;
-    [SerializeField] private int serverArmorLevel;
-    [SerializeField] private int extraBulletsLevel;
+    // --- PlayerPrefs keys ---
+    private const string KeyHasSave              = "SD_HasSave";
+    private const string KeyStage                = "SD_Stage";
+    private const string KeyBestStage            = "SD_BestStage";
+    private const string KeyDataPack             = "SD_DataPack";
+    private const string KeyStarterDamage        = "SD_StarterDamage";
+    private const string KeyStarterFireRate      = "SD_StarterFireRate";
+    private const string KeyServerArmor          = "SD_ServerArmor";
+    private const string KeyExtraBullets         = "SD_ExtraBullets";
+    private const string KeyPowerUpCpu           = "SD_PU_Cpu";
+    private const string KeyPowerUpRam           = "SD_PU_Ram";
+    private const string KeyPowerUpFirewall      = "SD_PU_Firewall";
+    private const string KeyPowerUpDoubleShot    = "SD_PU_DoubleShot";
+    private const string KeyPowerUpExplosive     = "SD_PU_Explosive";
+    private const string KeyPowerUpPiercingBeam  = "SD_PU_PiercingBeam";
+    private const string KeyCheckpointStage      = "SD_CheckpointStage"; // stage mốc gần nhất đã vượt qua
 
-    public bool HasSave => hasSave;
-    public int Stage => stage;
-    public int BestStage => bestStage;
-    public int DataPack => dataPack;
-    public int StarterDamageLevel => starterDamageLevel;
-    public int StarterFireRateLevel => starterFireRateLevel;
-    public int ServerArmorLevel => serverArmorLevel;
-    public int ExtraBulletsLevel => extraBulletsLevel;
+    // --- Properties đọc từ PlayerPrefs ---
+    public bool HasSave              => PlayerPrefs.GetInt(KeyHasSave, 0) == 1;
+    public int  Stage                => PlayerPrefs.GetInt(KeyStage, 1);
+    public int  BestStage            => PlayerPrefs.GetInt(KeyBestStage, 1);
+    public int  DataPack             => PlayerPrefs.GetInt(KeyDataPack, 0);
+    public int  StarterDamageLevel   => PlayerPrefs.GetInt(KeyStarterDamage, 0);
+    public int  StarterFireRateLevel => PlayerPrefs.GetInt(KeyStarterFireRate, 0);
+    public int  ServerArmorLevel     => PlayerPrefs.GetInt(KeyServerArmor, 0);
+    public int  ExtraBulletsLevel    => PlayerPrefs.GetInt(KeyExtraBullets, 0);
 
-    public void Save(int runStage, int runDataPack, int damageLevel, int fireRateLevel, int armorLevel, int bulletsLevel)
+    // --- Power-up levels (level-up trong game) ---
+    public int  PowerUpCpuLevel          => PlayerPrefs.GetInt(KeyPowerUpCpu, 0);
+    public int  PowerUpRamLevel          => PlayerPrefs.GetInt(KeyPowerUpRam, 0);
+    public int  PowerUpFirewallLevel     => PlayerPrefs.GetInt(KeyPowerUpFirewall, 0);
+    public int  PowerUpDoubleShotLevel   => PlayerPrefs.GetInt(KeyPowerUpDoubleShot, 0);
+    public int  PowerUpExplosiveLevel    => PlayerPrefs.GetInt(KeyPowerUpExplosive, 0);
+    public int  PowerUpPiercingBeamLevel => PlayerPrefs.GetInt(KeyPowerUpPiercingBeam, 0);
+
+    /// <summary>Stage mốc gần nhất đã vượt qua (1 nếu chưa vượt milestone nào).</summary>
+    public int  CheckpointStage          => PlayerPrefs.GetInt(KeyCheckpointStage, 1);
+
+    /// <summary>Lưu toàn bộ tiến trình xuống PlayerPrefs (tự động ghi đĩa).</summary>
+    public void Save(
+        int runStage, int runDataPack,
+        int damageLevel, int fireRateLevel, int armorLevel, int bulletsLevel,
+        int cpuLevel, int ramLevel, int firewallLevel,
+        int doubleShotLevel, int explosiveLevel, int piercingBeamLevel,
+        int checkpointStage)
     {
-        hasSave = true;
-        stage = Mathf.Max(1, runStage);
-        bestStage = Mathf.Max(bestStage, stage); // chỉ cập nhật nếu cao hơn record cũ
-        dataPack = Mathf.Max(0, runDataPack);
-        starterDamageLevel = Mathf.Max(0, damageLevel);
-        starterFireRateLevel = Mathf.Max(0, fireRateLevel);
-        serverArmorLevel = Mathf.Max(0, armorLevel);
-        extraBulletsLevel = Mathf.Max(0, bulletsLevel);
+        int bestStage = Mathf.Max(PlayerPrefs.GetInt(KeyBestStage, 1), runStage);
+
+        PlayerPrefs.SetInt(KeyHasSave,           1);
+        PlayerPrefs.SetInt(KeyStage,             Mathf.Max(1, runStage));
+        PlayerPrefs.SetInt(KeyBestStage,         bestStage);
+        PlayerPrefs.SetInt(KeyDataPack,          Mathf.Max(0, runDataPack));
+        PlayerPrefs.SetInt(KeyStarterDamage,     Mathf.Max(0, damageLevel));
+        PlayerPrefs.SetInt(KeyStarterFireRate,   Mathf.Max(0, fireRateLevel));
+        PlayerPrefs.SetInt(KeyServerArmor,       Mathf.Max(0, armorLevel));
+        PlayerPrefs.SetInt(KeyExtraBullets,      Mathf.Max(0, bulletsLevel));
+        PlayerPrefs.SetInt(KeyPowerUpCpu,        Mathf.Max(0, cpuLevel));
+        PlayerPrefs.SetInt(KeyPowerUpRam,        Mathf.Max(0, ramLevel));
+        PlayerPrefs.SetInt(KeyPowerUpFirewall,   Mathf.Max(0, firewallLevel));
+        PlayerPrefs.SetInt(KeyPowerUpDoubleShot, Mathf.Max(0, doubleShotLevel));
+        PlayerPrefs.SetInt(KeyPowerUpExplosive,  Mathf.Max(0, explosiveLevel));
+        PlayerPrefs.SetInt(KeyPowerUpPiercingBeam, Mathf.Max(0, piercingBeamLevel));
+        PlayerPrefs.SetInt(KeyCheckpointStage,   Mathf.Max(1, checkpointStage));
+
+        PlayerPrefs.Save(); // ghi xuống đĩa ngay lập tức
     }
 
+    /// <summary>Xóa save hiện tại — BestStage được giữ lại vĩnh viễn.</summary>
     public void Clear()
     {
-        hasSave = false;
-        stage = 1;
-        // bestStage không bị xóa khi reset — đây là kỷ lục vĩnh viễn
-        dataPack = 0;
-        starterDamageLevel = 0;
-        starterFireRateLevel = 0;
-        serverArmorLevel = 0;
-        extraBulletsLevel = 0;
+        PlayerPrefs.SetInt(KeyHasSave,           0);
+        PlayerPrefs.SetInt(KeyStage,             1);
+        PlayerPrefs.SetInt(KeyDataPack,          0);
+        PlayerPrefs.SetInt(KeyStarterDamage,     0);
+        PlayerPrefs.SetInt(KeyStarterFireRate,   0);
+        PlayerPrefs.SetInt(KeyServerArmor,       0);
+        PlayerPrefs.SetInt(KeyExtraBullets,      0);
+        PlayerPrefs.SetInt(KeyPowerUpCpu,        0);
+        PlayerPrefs.SetInt(KeyPowerUpRam,        0);
+        PlayerPrefs.SetInt(KeyPowerUpFirewall,   0);
+        PlayerPrefs.SetInt(KeyPowerUpDoubleShot, 0);
+        PlayerPrefs.SetInt(KeyPowerUpExplosive,  0);
+        PlayerPrefs.SetInt(KeyPowerUpPiercingBeam, 0);
+        PlayerPrefs.SetInt(KeyCheckpointStage,   1); // reset checkpoint về đầu
+        PlayerPrefs.Save();
+        // KeyBestStage không bị xóa — kỷ lục tồn tại vĩnh viễn
     }
 }

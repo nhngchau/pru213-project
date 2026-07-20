@@ -107,6 +107,7 @@ public class PlayerProgression : MonoBehaviour
             waitingForPowerUpChoice = true;
             Time.timeScale = 0f;
             RaiseExpChanged();
+            GameAudioManager.Instance?.PlayLevelUp(); // sound khi lên cấp
             Debug.Log($"PlayerProgression: Level up to {level}");
             GameEvents.RaiseLevelUpReady(level);
             return;
