@@ -11,6 +11,10 @@ public class ServerCore : MonoBehaviour, IDamageable
 
     void Start()
     {
+        // HP tăng theo stage để cân bằng với enemy mạnh hơn
+        // Stage 1: x1, Stage 2: x1.5, Stage 3: x2, Stage 4: x2.5...
+        float stageHPMultiplier = 1f + (RunProgress.Stage - 1) * 0.5f;
+        maxHP = Mathf.RoundToInt(maxHP * stageHPMultiplier);
         maxHP += RunProgress.ServerHpBonus;
         currentHP = maxHP;
 

@@ -3,11 +3,42 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
+/// <summary>
+/// Cấu hình enemy cho từng stage.
+/// Nếu stage hiện tại không có trong danh sách → dùng stageEnemySets cuối cùng.
+/// </summary>
+[System.Serializable]
+public class StageEnemySet
+{
+    [Tooltip("Stage này áp dụng từ stage nào trở đi (ví dụ: 1, 2, 3...)")]
+    public int fromStage = 1;
+
+    [Tooltip("Danh sách enemy prefab xuất hiện ở stage này")]
+    public GameObject[] enemyPrefabs;
+}
+
+[System.Serializable]
+public class StageBossSettings
+{
+    [Tooltip("Stage xuất hiện Boss (ví dụ: 6, 9, 10)")]
+    public int stage;
+    [Tooltip("Prefab của Boss tương ứng")]
+    public GameObject bossPrefab;
+    [Tooltip("Số lượng Boss xuất hiện")]
+    public int bossCount = 1;
+}
+
 public class EnemySpawner : MonoBehaviour
 {
-    [Header("Enemy Prefabs")]
-    [Tooltip("Add all enemy types here (e.g. SyntaxError, MemoryLeak, LogicBug). One is chosen at random per spawn.")]
-    [SerializeField] private GameObject[] enemyPrefabs;
+    [Header("Enemy Prefabs theo Stage")]
+    [Tooltip("Mỗi entry là 1 bộ enemy cho stage tương ứng. Stage không có entry → dùng entry cuối.")]
+    [SerializeField] private StageEnemySet[] stageEnemySets;
+
+    [Header("Boss Settings")]
+    [Tooltip("Cấu hình Boss riêng biệt cho từng Stage")]
+    [SerializeField] private List<StageBossSettings> bossSettings = new List<StageBossSettings>();
+    [Tooltip("Thời gian chờ trước khi Boss xuất hiện (giây)")]
+    [SerializeField] private float bossSpawnDelay = 10f;
 
     [Header("Spawn Points")]
     [SerializeField] private Transform[] spawnPoints;
@@ -35,10 +66,41 @@ public class EnemySpawner : MonoBehaviour
     private int runtimeMaxGroupSize;
     private float buildProgress01;
 
+    // Cache bộ enemy đang dùng cho stage hiện tại
+    private GameObject[] currentEnemyPrefabs;
+    private StageBossSettings currentBossSetting;
+
     private void Awake()
     {
+        currentEnemyPrefabs = GetEnemyPrefabsForStage(RunProgress.Stage);
+        if (bossSettings != null)
+        {
+            currentBossSetting = bossSettings.Find(b => b.stage == RunProgress.Stage);
+        }
         BuildPools();
     }
+
+    /// <summary>Trả về bộ enemy phù hợp với stage hiện tại.</summary>
+    private GameObject[] GetEnemyPrefabsForStage(int stage)
+    {
+        if (stageEnemySets == null || stageEnemySets.Length == 0)
+        {
+            return new GameObject[0];
+        }
+
+        // Tìm entry phù hợp nhất: entry có fromStage <= stage và lớn nhất
+        StageEnemySet best = stageEnemySets[0];
+        foreach (StageEnemySet set in stageEnemySets)
+        {
+            if (set.fromStage <= stage && set.fromStage >= best.fromStage)
+            {
+                best = set;
+            }
+        }
+
+        return best.enemyPrefabs ?? new GameObject[0];
+    }
+
 
     private void OnEnable()
     {
@@ -54,6 +116,41 @@ public class EnemySpawner : MonoBehaviour
     {
         ApplySpawnScaling();
         StartCoroutine(SpawnEnemyRoutine());
+
+        // Nếu stage hiện tại có cấu hình Boss, bắt đầu đếm ngược để spawn Boss
+        if (currentBossSetting != null && currentBossSetting.bossPrefab != null)
+        {
+            StartCoroutine(SpawnBossRoutine());
+        }
+    }
+
+    private IEnumerator SpawnBossRoutine()
+    {
+        yield return new WaitForSeconds(bossSpawnDelay);
+
+        if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
+        {
+            yield break;
+        }
+
+        if (spawnPoints == null || spawnPoints.Length == 0) yield break;
+
+        for (int i = 0; i < currentBossSetting.bossCount; i++)
+        {
+            Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+            Vector2 spreadOffset = Random.insideUnitCircle * groupSpreadRadius;
+            Vector3 spawnPosition = spawnPoint.position + new Vector3(spreadOffset.x, spreadOffset.y, 0f);
+
+            EnemyBehavior boss = GetEnemy(currentBossSetting.bossPrefab);
+            if (boss != null)
+            {
+                boss.transform.SetPositionAndRotation(spawnPosition, spawnPoint.rotation);
+                boss.ResetState();
+                
+                // Tăng kích thước Boss cho nổi bật (tuỳ chọn)
+                boss.transform.localScale = currentBossSetting.bossPrefab.transform.localScale * 1.5f;
+            }
+        }
     }
 
     private void HandleBuildProgressChanged(float percent)
@@ -90,10 +187,9 @@ public class EnemySpawner : MonoBehaviour
 
     private void SpawnEnemyGroup()
     {
-        // --- Guard checks ---------------------------------------------------
-        if (enemyPrefabs == null || enemyPrefabs.Length == 0)
+        if (currentEnemyPrefabs == null || currentEnemyPrefabs.Length == 0)
         {
-            Debug.LogWarning("EnemySpawner: No enemy prefabs assigned. Add at least one prefab to the Enemy Prefabs array.");
+            Debug.LogWarning("EnemySpawner: Không có enemy prefab cho stage " + RunProgress.Stage + ". Hãy gán Stage Enemy Sets trong Inspector.");
             return;
         }
 
@@ -103,32 +199,18 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        // --- Pick a random spawn point --------------------------------------
         Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
-        if (spawnPoint == null)
-        {
-            Debug.LogWarning("EnemySpawner: Selected spawn point is null — check your Spawn Points array for missing references.");
-            return;
-        }
+        if (spawnPoint == null) return;
 
-        // --- Determine group size -------------------------------------------
-        // Random.Range (int) is exclusive on max, so add 1 to include maxGroupSize.
         int smallestGroup = Mathf.Min(runtimeMinGroupSize, runtimeMaxGroupSize);
         int largestGroup  = Mathf.Max(runtimeMinGroupSize, runtimeMaxGroupSize);
         int groupSize     = Random.Range(smallestGroup, largestGroup + 1);
 
-        // --- Spawn each enemy in the group ----------------------------------
         for (int i = 0; i < groupSize; i++)
         {
-            // Choose a random prefab from the array for every individual enemy.
-            GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
-            if (prefab == null)
-            {
-                Debug.LogWarning($"EnemySpawner: Enemy prefab at index {i % enemyPrefabs.Length} is null — skipping.");
-                continue;
-            }
+            GameObject prefab = currentEnemyPrefabs[Random.Range(0, currentEnemyPrefabs.Length)];
+            if (prefab == null) continue;
 
-            // Spread enemies in a circle around the chosen spawn point.
             Vector2 spreadOffset = Random.insideUnitCircle * groupSpreadRadius;
             Vector3 spawnPosition = spawnPoint.position + new Vector3(spreadOffset.x, spreadOffset.y, 0f);
 
@@ -144,17 +226,29 @@ public class EnemySpawner : MonoBehaviour
     private void BuildPools()
     {
         enemyPools.Clear();
-        if (enemyPrefabs == null)
+
+        // Khởi tạo Pool cho Boss nếu stage hiện tại cần Boss
+        if (currentBossSetting != null && currentBossSetting.bossPrefab != null && !enemyPools.ContainsKey(currentBossSetting.bossPrefab))
         {
-            return;
+            GameObject bPrefab = currentBossSetting.bossPrefab;
+            if (bPrefab.TryGetComponent(out EnemyBehavior _))
+            {
+                enemyPools[bPrefab] = new ObjectPool<EnemyBehavior>(
+                    createFunc: () => CreateEnemy(bPrefab),
+                    actionOnGet: enemy => enemy.gameObject.SetActive(true),
+                    actionOnRelease: enemy => enemy.gameObject.SetActive(false),
+                    actionOnDestroy: enemy => Destroy(enemy.gameObject),
+                    collectionCheck: true,
+                    defaultCapacity: 1,
+                    maxSize: 5);
+            }
         }
 
-        foreach (GameObject prefab in enemyPrefabs)
+        if (currentEnemyPrefabs == null) return;
+
+        foreach (GameObject prefab in currentEnemyPrefabs)
         {
-            if (prefab == null || enemyPools.ContainsKey(prefab))
-            {
-                continue;
-            }
+            if (prefab == null || enemyPools.ContainsKey(prefab)) continue;
 
             if (!prefab.TryGetComponent(out EnemyBehavior _))
             {

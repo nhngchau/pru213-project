@@ -1,12 +1,17 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Guide Panel")]
     [SerializeField] private GameObject guidePanel;
     [SerializeField] private Button continueButton;
+
+    [Header("Best Stage")]
+    [Tooltip("Text hiển thị kỷ lục stage cao nhất. Tự tìm object tên BestStageText nếu để trống.")]
+    [SerializeField] private TMP_Text bestStageText;
 
     [Header("Button Hover Animation")]
     [SerializeField] private float hoverScale = 1.1f;
@@ -39,6 +44,7 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
     private void Start()
     {
         AutoBindContinueButton();
+        AutoBindBestStageText();
 
         if (guidePanel != null)
         {
@@ -48,6 +54,7 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
         PlayBackgroundMusic();
         RegisterButtonSounds();
         RefreshContinueState();
+        RefreshBestStage();
     }
 
     private void Update()
@@ -162,6 +169,27 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
         if (continueButton != null)
         {
             continueButton.interactable = RunProgress.HasSavedRun;
+        }
+    }
+
+    private void RefreshBestStage()
+    {
+        if (bestStageText == null) return;
+
+        int best = RunProgress.BestStage;
+        bestStageText.text = best > 1
+            ? $"🏆 Best Stage: {best}"
+            : "Best Stage: --";
+    }
+
+    private void AutoBindBestStageText()
+    {
+        if (bestStageText != null) return;
+
+        Transform found = FindChildRecursive(transform.root, "BestStageText");
+        if (found != null)
+        {
+            bestStageText = found.GetComponent<TMP_Text>();
         }
     }
 
