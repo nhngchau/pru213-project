@@ -169,7 +169,20 @@ public class ShopPanelUI : Modal
             return;
         }
 
+        bool clearingFinalStage = RunProgress.Stage >= RunProgress.MaxStage;
+
         RunProgress.AdvanceStage();
+
+        if (clearingFinalStage)
+        {
+            // AdvanceStage() đã bắn OnGameCompleted và màn hình chiến thắng đang hiện.
+            // Không load GameScene nữa — làm vậy sẽ huỷ luôn màn thắng cùng scene cũ
+            // và đưa người chơi quay lại stage 1.
+            isLeavingShop = true;
+            SetShopButtonsInteractable(false);
+            return;
+        }
+
         LeaveShopAndLoadScene("GameScene");
     }
 

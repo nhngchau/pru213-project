@@ -79,8 +79,10 @@ public class PlayerProgression : MonoBehaviour
 
     private void Start()
     {
-        level = Mathf.Max(1, startingLevel);
-        currentExp = 0;
+        // Khôi phục level/EXP của run thay vì reset về 1 — sang stage mới vẫn giữ
+        // nguyên tiến độ và ngưỡng lên cấp (RunProgress.ClearPowerUps mới reset về 1).
+        level = Mathf.Max(Mathf.Max(1, startingLevel), RunProgress.PlayerLevel);
+        currentExp = Mathf.Max(0, RunProgress.PlayerExp);
         RaiseExpChanged();
     }
 
@@ -106,6 +108,7 @@ public class PlayerProgression : MonoBehaviour
             level++;
             waitingForPowerUpChoice = true;
             Time.timeScale = 0f;
+            RunProgress.SetPlayerProgress(level, currentExp, persist: true); // ghi đĩa mỗi lần lên cấp
             RaiseExpChanged();
             GameAudioManager.Instance?.PlayLevelUp(); // sound khi lên cấp
             Debug.Log($"PlayerProgression: Level up to {level}");
@@ -138,6 +141,7 @@ public class PlayerProgression : MonoBehaviour
 
     private void RaiseExpChanged()
     {
+        RunProgress.SetPlayerProgress(level, currentExp); // giữ trong bộ nhớ, không ghi đĩa mỗi lần giết quái
         GameEvents.RaiseExpChanged(currentExp, RequiredExp, level);
     }
 }

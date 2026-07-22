@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         PlayerProgression.EnsureExistsForCurrentScene();
+        PauseController.EnsureExistsForCurrentScene();
         Time.timeScale = 1f;
         IsGameOver = false;
         IsGameWon = false;

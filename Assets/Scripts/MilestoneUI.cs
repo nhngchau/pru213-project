@@ -51,7 +51,7 @@ public class MilestoneUI : MonoBehaviour
     {
         // Cập nhật nội dung text
         if (titleText  != null) titleText.text  = "🏆 MILESTONE!";
-        if (stageText  != null) stageText.text  = $"Stage {stage} Hoàn Thành!";
+        if (stageText  != null) stageText.text  = $"Stage {stage} Complete!";
         if (bonusText  != null) bonusText.text  = $"+{bonusDataPack} DataPack Bonus!";
 
         // Hiện popup với fade in

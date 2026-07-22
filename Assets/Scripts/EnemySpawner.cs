@@ -72,7 +72,16 @@ public class EnemySpawner : MonoBehaviour
 
     private void Awake()
     {
-        currentEnemyPrefabs = GetEnemyPrefabsForStage(RunProgress.Stage);
+        currentEnemyPrefabs = FilterSpawnable(GetEnemyPrefabsForStage(RunProgress.Stage));
+
+        // Nếu bộ enemy của stage này không còn prefab nào hợp lệ (ví dụ prefab bị thiếu
+        // component EnemyBehavior), mượn tạm prefab hợp lệ của stage khác để stage không
+        // rơi vào trạng thái đứng im không có quái nào.
+        if (currentEnemyPrefabs.Length == 0)
+        {
+            currentEnemyPrefabs = FindFallbackPrefabs();
+        }
+
         if (bossSettings != null)
         {
             currentBossSetting = bossSettings.Find(b => b.stage == RunProgress.Stage);
@@ -99,6 +108,69 @@ public class EnemySpawner : MonoBehaviour
         }
 
         return best.enemyPrefabs ?? new GameObject[0];
+    }
+
+    /// <summary>Bỏ các prefab null hoặc thiếu EnemyBehavior (những prefab này không pool được).</summary>
+    private GameObject[] FilterSpawnable(GameObject[] prefabs)
+    {
+        if (prefabs == null || prefabs.Length == 0)
+        {
+            return new GameObject[0];
+        }
+
+        List<GameObject> spawnable = new List<GameObject>(prefabs.Length);
+        foreach (GameObject prefab in prefabs)
+        {
+            if (prefab == null)
+            {
+                continue;
+            }
+
+            if (!prefab.TryGetComponent(out EnemyBehavior _))
+            {
+                Debug.LogError($"EnemySpawner: prefab '{prefab.name}' thiếu component EnemyBehavior " +
+                               $"nên bị loại khỏi stage {RunProgress.Stage}. Hãy gắn EnemyBehavior cho prefab này.");
+                continue;
+            }
+
+            spawnable.Add(prefab);
+        }
+
+        return spawnable.ToArray();
+    }
+
+    /// <summary>Quét toàn bộ stageEnemySets để tìm bất kỳ prefab hợp lệ nào làm phương án dự phòng.</summary>
+    private GameObject[] FindFallbackPrefabs()
+    {
+        if (stageEnemySets == null)
+        {
+            return new GameObject[0];
+        }
+
+        // Ưu tiên bộ enemy của stage gần nhất phía trước, rồi mới tới các stage sau.
+        for (int stage = RunProgress.Stage - 1; stage >= 1; stage--)
+        {
+            GameObject[] candidates = FilterSpawnable(GetEnemyPrefabsForStage(stage));
+            if (candidates.Length > 0)
+            {
+                Debug.LogWarning($"EnemySpawner: stage {RunProgress.Stage} không có enemy hợp lệ, " +
+                                 $"dùng tạm bộ enemy của stage {stage}.");
+                return candidates;
+            }
+        }
+
+        foreach (StageEnemySet set in stageEnemySets)
+        {
+            GameObject[] candidates = FilterSpawnable(set?.enemyPrefabs);
+            if (candidates.Length > 0)
+            {
+                Debug.LogWarning($"EnemySpawner: stage {RunProgress.Stage} không có enemy hợp lệ, " +
+                                 $"dùng tạm bộ enemy của stage {set.fromStage}.");
+                return candidates;
+            }
+        }
+
+        return new GameObject[0];
     }
 
 

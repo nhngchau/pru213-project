@@ -9,7 +9,6 @@ public class GameAudioManager : MonoBehaviour
 
     [Header("Background Music")]
     [SerializeField] private AudioClip backgroundMusic;
-    [Range(0f, 1f)] [SerializeField] private float musicVolume = 0.5f;
 
     [Header("Sound Effects")]
     [SerializeField] private AudioClip shootSound;
@@ -19,7 +18,6 @@ public class GameAudioManager : MonoBehaviour
     [SerializeField] private AudioClip levelUpSound;     // âm thanh khi lên cấp
     [SerializeField] private AudioClip winSound;
     [SerializeField] private AudioClip gameOverSound;
-    [Range(0f, 1f)] [SerializeField] private float soundVolume = 0.8f;
 
     private AudioSource musicSource;
     private AudioSource soundSource;
@@ -33,8 +31,32 @@ public class GameAudioManager : MonoBehaviour
         }
 
         Instance = this;
-        musicSource = CreateAudioSource("Game Music", true, musicVolume);
-        soundSource = CreateAudioSource("Game SFX", false, soundVolume);
+        musicSource = CreateAudioSource("Game Music", true, VolumeSettings.MusicOutput);
+        soundSource = CreateAudioSource("Game SFX", false, VolumeSettings.SfxOutput);
+    }
+
+    private void OnEnable()
+    {
+        VolumeSettings.OnChanged += ApplyVolumes;
+    }
+
+    private void OnDisable()
+    {
+        VolumeSettings.OnChanged -= ApplyVolumes;
+    }
+
+    /// <summary>Áp mức âm lượng mới ngay khi người chơi kéo slider trong panel Option.</summary>
+    private void ApplyVolumes()
+    {
+        if (musicSource != null)
+        {
+            musicSource.volume = VolumeSettings.MusicOutput;
+        }
+
+        if (soundSource != null)
+        {
+            soundSource.volume = VolumeSettings.SfxOutput;
+        }
     }
 
     private void Start()
@@ -84,7 +106,7 @@ public class GameAudioManager : MonoBehaviour
     {
         if (clip != null && soundSource != null)
         {
-            soundSource.PlayOneShot(clip, soundVolume);
+            soundSource.PlayOneShot(clip, VolumeSettings.SfxOutput);
         }
     }
 

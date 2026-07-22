@@ -24,9 +24,6 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
     [SerializeField] private AudioClip buttonHoverSound;
     [Tooltip("Âm thanh phát khi nhấn một button.")]
     [SerializeField] private AudioClip buttonClickSound;
-    [Range(0f, 1f)] [SerializeField] private float musicVolume = 0.5f;
-    [Range(0f, 1f)] [SerializeField] private float soundVolume = 0.8f;
-
     private Vector3 normalScale;
     private Vector3 targetScale;
     private AudioSource musicSource;
@@ -37,8 +34,31 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
         normalScale = transform.localScale;
         targetScale = normalScale;
 
-        musicSource = CreateAudioSource("Menu Music", true, musicVolume);
-        soundSource = CreateAudioSource("Menu SFX", false, soundVolume);
+        musicSource = CreateAudioSource("Menu Music", true, VolumeSettings.MusicOutput);
+        soundSource = CreateAudioSource("Menu SFX", false, VolumeSettings.SfxOutput);
+    }
+
+    private void OnEnable()
+    {
+        VolumeSettings.OnChanged += ApplyVolumes;
+    }
+
+    private void OnDisable()
+    {
+        VolumeSettings.OnChanged -= ApplyVolumes;
+    }
+
+    private void ApplyVolumes()
+    {
+        if (musicSource != null)
+        {
+            musicSource.volume = VolumeSettings.MusicOutput;
+        }
+
+        if (soundSource != null)
+        {
+            soundSource.volume = VolumeSettings.SfxOutput;
+        }
     }
 
     private void Start()
@@ -97,6 +117,7 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
     public void NewGame()
     {
         RunProgress.ResetRun();
+        RunStats.Reset();
         SceneTransition.LoadScene("GameScene");
     }
 
@@ -109,6 +130,12 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
         }
 
         SceneTransition.LoadScene("GameScene");
+    }
+
+    /// <summary>Gắn vào onClick của button OPTION trong Inspector.</summary>
+    public void OpenOptions()
+    {
+        OptionsPanelUI.Show();
     }
 
     public void QuitGame()
@@ -137,7 +164,7 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
         }
 
         musicSource.clip = backgroundMusic;
-        musicSource.volume = musicVolume;
+        musicSource.volume = VolumeSettings.MusicOutput;
         musicSource.Play();
     }
 
@@ -245,7 +272,7 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         if (clip != null && soundSource != null)
         {
-            soundSource.PlayOneShot(clip, soundVolume);
+            soundSource.PlayOneShot(clip, VolumeSettings.SfxOutput);
         }
     }
 }
