@@ -15,6 +15,8 @@ public class GameAudioManager : MonoBehaviour
     [SerializeField] private AudioClip shootSound;
     [SerializeField] private AudioClip enemyDefeatedSound;
     [SerializeField] private AudioClip serverHitSound;
+    [SerializeField] private AudioClip playerHitSound;   // âm thanh khi player bị đánh
+    [SerializeField] private AudioClip levelUpSound;     // âm thanh khi lên cấp
     [SerializeField] private AudioClip winSound;
     [SerializeField] private AudioClip gameOverSound;
     [Range(0f, 1f)] [SerializeField] private float soundVolume = 0.8f;
@@ -46,9 +48,11 @@ public class GameAudioManager : MonoBehaviour
         musicSource.Play();
     }
 
-    public void PlayShoot() => PlaySound(shootSound);
+    public void PlayShoot()         => PlaySound(shootSound);
     public void PlayEnemyDefeated() => PlaySound(enemyDefeatedSound);
-    public void PlayServerHit() => PlaySound(serverHitSound);
+    public void PlayServerHit()     => PlaySound(serverHitSound);
+    public void PlayPlayerHit()     => PlaySound(playerHitSound);
+    public void PlayLevelUp()       => PlaySound(levelUpSound);
 
     public void PlayWin()
     {

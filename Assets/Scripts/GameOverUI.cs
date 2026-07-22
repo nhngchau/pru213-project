@@ -23,7 +23,8 @@ public class GameOverUI : Modal
 
     public void OnRestartClicked()
     {
-        RunProgress.ResetRun();
+        // Quay về stage mốc gần nhất (3, 6, 9) thay vì reset về stage 1
+        RunProgress.RestartFromCheckpoint();
         Time.timeScale = 1f;
         SceneTransition.LoadScene("GameScene");
     }

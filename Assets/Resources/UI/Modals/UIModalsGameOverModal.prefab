@@ -96,6 +96,8 @@ MonoBehaviour:
   _animationContainer:
     _enterAnimations: []
     _exitAnimations: []
+  restartButton: {fileID: 0}
+  mainMenuButton: {fileID: 0}
 --- !u!1 &5872784349322406761
 GameObject:
   m_ObjectHideFlags: 0

@@ -53,7 +53,7 @@ public class EnemyBehavior : MonoBehaviour, IDamageable
         if (server != null && !isAttackingServer)
         {
             direction = (server.transform.position - transform.position).normalized;
-            transform.Translate(direction * config.moveSpeed * Time.deltaTime);
+            transform.Translate(direction * config.moveSpeed * Time.deltaTime, Space.World);
         }
 
         // Send directional info to Animator

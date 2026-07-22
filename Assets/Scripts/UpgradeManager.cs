@@ -7,7 +7,7 @@ public enum UpgradeType
     UpgradeRAM,   // fire rate
     Firewall,     // server HP
     DoubleShot,   // more bullets per shot
-    Ricochet,     // bullets bounce off walls
+    Explosive,    // bullets explode on impact, dealing AoE damage
     PiercingBeam  // bullets pierce enemies
 }
 
@@ -32,20 +32,20 @@ public class UpgradeManager : MonoBehaviour
     [SerializeField] private float minFireRate = 0.1f;
     [SerializeField] private int firewallHpPerLevel = 100;
     [SerializeField] private int bulletsPerDoubleShotLevel = 1;
-    [SerializeField] private int bouncesPerRicochetLevel = 1;
+    [SerializeField] private float explosionRadiusPerLevel = 1.25f;
     [SerializeField] private int piercesPerBeamLevel = 1;
 
     private int baseDamage = 10;
     private float baseFireRate = 0.15f;
     private int baseBulletsPerShot = 1;
-    private int baseBulletBounces;
+    private float baseExplosionRadius = 0f;
     private int baseBulletPierces;
 
     private int cpuLevel;
     private int ramLevel;
     private int firewallLevel;
     private int doubleShotLevel;
-    private int ricochetLevel;
+    private int explosiveLevel;
     private int piercingBeamLevel;
 
     public int DataPack { get; private set; }
@@ -85,7 +85,7 @@ public class UpgradeManager : MonoBehaviour
         baseDamage = playerShooting.BulletDamage;
         baseFireRate = playerShooting.FireRate;
         baseBulletsPerShot = playerShooting.BulletsPerShot;
-        baseBulletBounces = playerShooting.BulletBounces;
+        baseExplosionRadius = playerShooting.ExplosionRadius;
         baseBulletPierces = playerShooting.BulletPierces;
     }
 
@@ -117,9 +117,9 @@ public class UpgradeManager : MonoBehaviour
         UpgradeType.DoubleShot => IsMaxed(type)
             ? "MAX LEVEL"
             : $"Bullets {GetCurrentBulletsPerShot()} -> {GetNextBulletsPerShot()}  (Lv {doubleShotLevel + 1})",
-        UpgradeType.Ricochet => IsMaxed(type)
+        UpgradeType.Explosive => IsMaxed(type)
             ? "MAX LEVEL"
-            : $"Bounce {GetCurrentBounces()} -> {GetNextBounces()}  (Lv {ricochetLevel + 1})",
+            : $"Explosion Radius {GetCurrentExplosionRadius():0.0}m -> {GetNextExplosionRadius():0.0}m  (Lv {explosiveLevel + 1})",
         UpgradeType.PiercingBeam => IsMaxed(type)
             ? "MAX LEVEL"
             : $"Pierce {GetCurrentPierces()} -> {GetNextPierces()}  (Lv {piercingBeamLevel + 1})",
@@ -132,7 +132,7 @@ public class UpgradeManager : MonoBehaviour
         UpgradeType.UpgradeRAM => "Upgrade RAM",
         UpgradeType.Firewall => "Firewall",
         UpgradeType.DoubleShot => "Double Shot",
-        UpgradeType.Ricochet => "Ricochet Bullet",
+        UpgradeType.Explosive => "Explosive Bullet",
         UpgradeType.PiercingBeam => "Piercing Beam",
         _ => string.Empty,
     };
@@ -145,7 +145,7 @@ public class UpgradeManager : MonoBehaviour
             UpgradeType.UpgradeRAM,
             UpgradeType.Firewall,
             UpgradeType.DoubleShot,
-            UpgradeType.Ricochet,
+            UpgradeType.Explosive,
             UpgradeType.PiercingBeam,
         };
 
@@ -222,10 +222,10 @@ public class UpgradeManager : MonoBehaviour
                 playerShooting?.SetBulletsPerShot(GetCurrentBulletsPerShot());
                 break;
 
-            case UpgradeType.Ricochet:
+            case UpgradeType.Explosive:
                 RunProgress.AddPowerUpLevel(type);
-                ricochetLevel = RunProgress.PowerUpRicochetLevel;
-                playerShooting?.SetBulletBounces(GetCurrentBounces());
+                explosiveLevel = RunProgress.PowerUpExplosiveLevel;
+                playerShooting?.SetExplosionRadius(GetCurrentExplosionRadius());
                 break;
 
             case UpgradeType.PiercingBeam:
@@ -243,8 +243,8 @@ public class UpgradeManager : MonoBehaviour
     private int GetNextDamage() => baseDamage + (cpuLevel + 1) * damagePerCpuLevel;
     private int GetCurrentBulletsPerShot() => baseBulletsPerShot + doubleShotLevel * bulletsPerDoubleShotLevel;
     private int GetNextBulletsPerShot() => baseBulletsPerShot + (doubleShotLevel + 1) * bulletsPerDoubleShotLevel;
-    private int GetCurrentBounces() => baseBulletBounces + ricochetLevel * bouncesPerRicochetLevel;
-    private int GetNextBounces() => baseBulletBounces + (ricochetLevel + 1) * bouncesPerRicochetLevel;
+    private float GetCurrentExplosionRadius() => baseExplosionRadius + explosiveLevel * explosionRadiusPerLevel;
+    private float GetNextExplosionRadius() => baseExplosionRadius + (explosiveLevel + 1) * explosionRadiusPerLevel;
     private int GetCurrentPierces() => baseBulletPierces + piercingBeamLevel * piercesPerBeamLevel;
     private int GetNextPierces() => baseBulletPierces + (piercingBeamLevel + 1) * piercesPerBeamLevel;
 
@@ -264,7 +264,7 @@ public class UpgradeManager : MonoBehaviour
         ramLevel = RunProgress.PowerUpRamLevel;
         firewallLevel = RunProgress.PowerUpFirewallLevel;
         doubleShotLevel = RunProgress.PowerUpDoubleShotLevel;
-        ricochetLevel = RunProgress.PowerUpRicochetLevel;
+        explosiveLevel = RunProgress.PowerUpExplosiveLevel;
         piercingBeamLevel = RunProgress.PowerUpPiercingBeamLevel;
     }
 
@@ -273,7 +273,7 @@ public class UpgradeManager : MonoBehaviour
         playerShooting?.SetBulletDamage(GetCurrentDamage());
         playerShooting?.SetFireRate(GetCurrentFireRate());
         playerShooting?.SetBulletsPerShot(GetCurrentBulletsPerShot());
-        playerShooting?.SetBulletBounces(GetCurrentBounces());
+        playerShooting?.SetExplosionRadius(GetCurrentExplosionRadius());
         playerShooting?.SetBulletPierces(GetCurrentPierces());
 
         if (firewallLevel > 0)

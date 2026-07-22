@@ -44,6 +44,11 @@ public class GameHUD : MonoBehaviour
         EnsureExpUI();
     }
 
+    void Start()
+    {
+        ShowStageIntro();
+    }
+
     void OnEnable()
     {
         BindOptionalServerHPUI();
@@ -128,7 +133,7 @@ public class GameHUD : MonoBehaviour
     {
         if (buildProgressLabel != null)
         {
-            buildProgressLabel.text = $"WAVE {currentWave}   -   BUILD {Mathf.RoundToInt(buildPercent)}%";
+            buildProgressLabel.text = $"STAGE {RunProgress.Stage}/{RunProgress.MaxStage}   |   WAVE {currentWave}   |   BUILD {Mathf.RoundToInt(buildPercent)}%";
         }
     }
 
@@ -299,5 +304,61 @@ public class GameHUD : MonoBehaviour
         }
 
         return null;
+    }
+
+    private void ShowStageIntro()
+    {
+        RectTransform root = CreateUIObject("StageIntro", transform);
+        root.anchorMin = Vector2.zero;
+        root.anchorMax = Vector2.one;
+        root.offsetMin = Vector2.zero;
+        root.offsetMax = Vector2.zero;
+
+        TMP_Text text = root.gameObject.AddComponent<TextMeshProUGUI>();
+        text.text = RunProgress.Stage >= RunProgress.MaxStage ? "FINAL STAGE" : $"STAGE {RunProgress.Stage}";
+        text.fontSize = 90f;
+        text.fontStyle = FontStyles.Bold;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(1f, 1f, 1f, 0f);
+        text.raycastTarget = false;
+        
+        // Thêm outline cho chữ nổi bật
+        text.fontSharedMaterial.EnableKeyword("OUTLINE_ON");
+        text.outlineWidth = 0.2f;
+        text.outlineColor = new Color32(0, 0, 0, 255);
+
+        StartCoroutine(StageIntroRoutine(text));
+    }
+
+    private System.Collections.IEnumerator StageIntroRoutine(TMP_Text text)
+    {
+        float elapsed = 0f;
+        float fadeTime = 0.6f;
+        float holdTime = 1.5f;
+
+        // Fade in
+        while (elapsed < fadeTime)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            text.color = new Color(1f, 1f, 1f, Mathf.Lerp(0f, 1f, elapsed / fadeTime));
+            yield return null;
+        }
+
+        // Hold
+        yield return new WaitForSecondsRealtime(holdTime);
+
+        // Fade out
+        elapsed = 0f;
+        while (elapsed < fadeTime)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            text.color = new Color(1f, 1f, 1f, Mathf.Lerp(1f, 0f, elapsed / fadeTime));
+            yield return null;
+        }
+
+        if (text != null && text.gameObject != null)
+        {
+            Destroy(text.gameObject);
+        }
     }
 }
