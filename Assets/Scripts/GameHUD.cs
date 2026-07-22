@@ -23,6 +23,10 @@ public class GameHUD : MonoBehaviour
     [SerializeField] private Image buildProgressFill;   // Image Type = Filled, Horizontal
     [SerializeField] private TMP_Text buildProgressLabel;
 
+    [Header("Build Blocked Warning")]
+    [SerializeField] private bool autoCreateBlockedBanner = true;
+    [SerializeField] private Color blockedColor = new Color(1f, 0.32f, 0.28f, 1f);
+
     [Header("DataPack (top right)")]
     [SerializeField] private TMP_Text dataPackText;
 
@@ -37,6 +41,13 @@ public class GameHUD : MonoBehaviour
 
     private int currentWave = 1;
     private float buildPercent;
+
+    private TMP_Text blockedBanner;
+    private int blockedCount;
+    private string blockerName = "BUG";
+    private Image cachedBuildFill;
+    private Color buildFillNormalColor;
+    private bool hasCachedBuildFillColor;
 
     void Awake()
     {
@@ -54,6 +65,7 @@ public class GameHUD : MonoBehaviour
         BindOptionalServerHPUI();
         EnsureExpUI();
         GameEvents.OnBuildProgressChanged += HandleProgress;
+        GameEvents.OnBuildBlockedChanged += HandleBuildBlocked;
         GameEvents.OnWaveStarted += HandleWaveStarted;
         GameEvents.OnDataPackChanged += HandleDataPack;
         GameEvents.OnExpChanged += HandleExp;
@@ -64,11 +76,25 @@ public class GameHUD : MonoBehaviour
     void OnDisable()
     {
         GameEvents.OnBuildProgressChanged -= HandleProgress;
+        GameEvents.OnBuildBlockedChanged -= HandleBuildBlocked;
         GameEvents.OnWaveStarted -= HandleWaveStarted;
         GameEvents.OnDataPackChanged -= HandleDataPack;
         GameEvents.OnExpChanged -= HandleExp;
         GameEvents.OnServerHealthChanged -= HandleServerHP;
         PlayerEvents.OnPlayerHealthChanged -= HandlePlayerHP;
+    }
+
+    void Update()
+    {
+        // Nhấp nháy nhẹ để kéo mắt về cảnh báo — thanh build đứng im mà không có gì động
+        // thì người chơi sẽ tưởng game bị treo.
+        if (blockedBanner == null || !blockedBanner.gameObject.activeSelf)
+        {
+            return;
+        }
+
+        float pulse = 0.65f + 0.35f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4f));
+        blockedBanner.color = new Color(blockedColor.r, blockedColor.g, blockedColor.b, pulse);
     }
 
     // GDD: Player HP bar (green, top-left).
@@ -129,11 +155,93 @@ public class GameHUD : MonoBehaviour
         UpdateLabel();
     }
 
+    private void HandleBuildBlocked(int count, string bugName)
+    {
+        blockedCount = Mathf.Max(0, count);
+        if (!string.IsNullOrEmpty(bugName))
+        {
+            blockerName = bugName;
+        }
+
+        EnsureBlockedBanner();
+
+        if (blockedBanner != null)
+        {
+            blockedBanner.gameObject.SetActive(blockedCount > 0);
+            if (blockedCount > 0)
+            {
+                blockedBanner.text = $"BUILD BLOCKED   -   {blockedCount}x {blockerName}";
+            }
+        }
+
+        TintBuildFill(blockedCount > 0);
+        UpdateLabel();
+    }
+
+    /// <summary>Nhuộm đỏ thanh build khi bị chặn, trả lại màu gốc khi thông.</summary>
+    private void TintBuildFill(bool blocked)
+    {
+        if (cachedBuildFill == null)
+        {
+            cachedBuildFill = buildProgressFill;
+
+            if (cachedBuildFill == null && buildProgressSlider != null && buildProgressSlider.fillRect != null)
+            {
+                cachedBuildFill = buildProgressSlider.fillRect.GetComponent<Image>();
+            }
+        }
+
+        if (cachedBuildFill == null)
+        {
+            return;
+        }
+
+        if (!hasCachedBuildFillColor)
+        {
+            buildFillNormalColor = cachedBuildFill.color;
+            hasCachedBuildFillColor = true;
+        }
+
+        cachedBuildFill.color = blocked ? blockedColor : buildFillNormalColor;
+    }
+
+    private void EnsureBlockedBanner()
+    {
+        if (blockedBanner != null || !autoCreateBlockedBanner)
+        {
+            return;
+        }
+
+        Transform existing = FindChildRecursive(transform, "BuildBlockedBanner");
+        if (existing != null)
+        {
+            blockedBanner = existing.GetComponent<TMP_Text>();
+            return;
+        }
+
+        RectTransform root = CreateUIObject("BuildBlockedBanner", transform);
+        root.anchorMin = new Vector2(0.5f, 1f);
+        root.anchorMax = new Vector2(0.5f, 1f);
+        root.pivot = new Vector2(0.5f, 1f);
+        root.anchoredPosition = new Vector2(0f, -64f);
+        root.sizeDelta = new Vector2(640f, 38f);
+
+        blockedBanner = root.gameObject.AddComponent<TextMeshProUGUI>();
+        blockedBanner.alignment = TextAlignmentOptions.Center;
+        blockedBanner.fontSize = 24f;
+        blockedBanner.fontStyle = FontStyles.Bold;
+        blockedBanner.color = blockedColor;
+        blockedBanner.raycastTarget = false;
+        blockedBanner.text = string.Empty;
+        blockedBanner.gameObject.SetActive(false);
+    }
+
     private void UpdateLabel()
     {
         if (buildProgressLabel != null)
         {
-            buildProgressLabel.text = $"STAGE {RunProgress.Stage}/{RunProgress.MaxStage}   |   WAVE {currentWave}   |   BUILD {Mathf.RoundToInt(buildPercent)}%";
+            string buildState = blockedCount > 0 ? "BLOCKED" : $"{Mathf.RoundToInt(buildPercent)}%";
+            buildProgressLabel.text = $"STAGE {RunProgress.Stage}/{RunProgress.MaxStage}   |   WAVE {currentWave}   |   BUILD {buildState}";
         }
     }
 
@@ -163,7 +271,10 @@ public class GameHUD : MonoBehaviour
 
         if (expLabel != null)
         {
-            expLabel.text = $"LV {level}  EXP {current}/{required}";
+            // Hai đại lượng khác nhau, không gộp làm một nữa:
+            // POWER = tổng power-up đã lấy cả run (thước đo sức mạnh thật, không reset mỗi stage).
+            // NEXT UPGRADE = quãng đường tới lần chọn nâng cấp kế tiếp trong stage này.
+            expLabel.text = $"POWER {RunProgress.TotalPowerUpLevels}   |   NEXT UPGRADE {current}/{required}";
         }
     }
 
@@ -194,7 +305,7 @@ public class GameHUD : MonoBehaviour
 
         expSlider = root.gameObject.AddComponent<Slider>();
         expSlider.minValue = 0f;
-        expSlider.maxValue = 30f;
+        expSlider.maxValue = 120f; // khớp baseExpRequired; bị ghi đè ngay ở HandleExp đầu tiên
         expSlider.value = 0f;
         expSlider.transition = Selectable.Transition.None;
 
@@ -229,7 +340,7 @@ public class GameHUD : MonoBehaviour
         expLabel.fontStyle = FontStyles.Bold;
         expLabel.color = expTextColor;
         expLabel.raycastTarget = false;
-        expLabel.text = "LV 1  EXP 0/30";
+        expLabel.text = "POWER 0   |   NEXT UPGRADE 0/120";
     }
 
     private void BindExpChildren(Transform root)

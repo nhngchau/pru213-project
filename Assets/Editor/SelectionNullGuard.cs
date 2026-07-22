@@ -65,9 +65,24 @@ public static class SelectionNullGuard
         RebuildInspector();
     }
 
+    /// <summary>
+    /// ForceRebuild() chỉ an toàn SAU khi thay đổi Selection đã có hiệu lực.
+    ///
+    /// Gán Selection.objects không tác động tức thì: ActiveEditorTracker vẫn giữ các object cũ cho
+    /// tới tick kế tiếp. Gọi ForceRebuild() đồng bộ ngay trong beforeAssemblyReload hoặc lúc thoát
+    /// Play mode nghĩa là bắt nó dựng Editor cho những object vừa bị huỷ — và đó chính là chỗ ném
+    /// SerializedObjectNotCreatableException ("Object at index 0 is null"), tức hàm này tự gây ra
+    /// đúng cái lỗi mà cả class đang cố dập.
+    ///
+    /// Hoãn một tick là đủ. Nếu domain reload xảy ra trước khi delayCall kịp chạy thì callback bị
+    /// bỏ qua — không sao, sau reload Inspector tự dựng lại và CleanNullSelection chạy lại từ đầu.
+    /// </summary>
     private static void RebuildInspector()
     {
-        ActiveEditorTracker.sharedTracker.ForceRebuild();
-        InternalEditorUtility.RepaintAllViews();
+        EditorApplication.delayCall += () =>
+        {
+            ActiveEditorTracker.sharedTracker.ForceRebuild();
+            InternalEditorUtility.RepaintAllViews();
+        };
     }
 }

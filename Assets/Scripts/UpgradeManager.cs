@@ -7,7 +7,6 @@ public enum UpgradeType
     UpgradeRAM,   // fire rate
     Firewall,     // server HP
     DoubleShot,   // more bullets per shot
-    Explosive,    // bullets explode on impact, dealing AoE damage
     PiercingBeam  // bullets pierce enemies
 }
 
@@ -27,25 +26,31 @@ public class UpgradeManager : MonoBehaviour
     [SerializeField] private int startingDataPack = 0;
 
     [Header("Upgrade Values")]
-    [SerializeField] private int damagePerCpuLevel = 5;
+    [SerializeField] private int damagePerCpuLevel = 8;
     [SerializeField] private float fireRateReductionPerRamLevel = 0.05f;
     [SerializeField] private float minFireRate = 0.1f;
     [SerializeField] private int firewallHpPerLevel = 100;
     [SerializeField] private int bulletsPerDoubleShotLevel = 1;
-    [SerializeField] private float explosionRadiusPerLevel = 1.25f;
     [SerializeField] private int piercesPerBeamLevel = 1;
+
+    [Header("Max Levels")]
+    [Tooltip("Trần của Overclock CPU. Không có trần thì damage tăng vô hạn vì power-up giữ qua mọi stage.")]
+    [SerializeField] private int maxCpuLevel = 15;
+    [Tooltip("Trần của Double Shot. Cộng dồn với booster Extra Barrel vào cùng biến bulletsPerShot, " +
+             "và quạt bắn cố định 30° nên quá số này các tia chồng lên nhau thành một mảng đặc.")]
+    [SerializeField] private int maxDoubleShotLevel = 3;
+    [Tooltip("Trần của Piercing Beam.")]
+    [SerializeField] private int maxPiercingBeamLevel = 4;
 
     private int baseDamage = 10;
     private float baseFireRate = 0.15f;
     private int baseBulletsPerShot = 1;
-    private float baseExplosionRadius = 0f;
     private int baseBulletPierces;
 
     private int cpuLevel;
     private int ramLevel;
     private int firewallLevel;
     private int doubleShotLevel;
-    private int explosiveLevel;
     private int piercingBeamLevel;
 
     public int DataPack { get; private set; }
@@ -85,7 +90,6 @@ public class UpgradeManager : MonoBehaviour
         baseDamage = playerShooting.BulletDamage;
         baseFireRate = playerShooting.FireRate;
         baseBulletsPerShot = playerShooting.BulletsPerShot;
-        baseExplosionRadius = playerShooting.ExplosionRadius;
         baseBulletPierces = playerShooting.BulletPierces;
     }
 
@@ -97,9 +101,22 @@ public class UpgradeManager : MonoBehaviour
 
     // --- Queries used by the UI ------------------------------------------
 
+    /// <summary>
+    /// Trần của từng track. Power-up được lưu ở RunProgress và áp lại mỗi stage, nên không có trần
+    /// nghĩa là chỉ số cộng dồn suốt cả run.
+    ///
+    /// Firewall CỐ Ý không có trần: GetRandomPowerUpOptions() dùng nó làm lựa chọn lấp chỗ trống khi
+    /// không đủ option hợp lệ, và phần lấp đó không kiểm tra CanChoose. Nếu Firewall cũng bị chặn thì
+    /// TryApplyPowerUp() trả về false -> OnUpgradePurchased không bao giờ raise -> PlayerProgression
+    /// kẹt ở waitingForPowerUpChoice và Time.timeScale đứng ở 0 -> game đơ vĩnh viễn.
+    /// </summary>
     public bool IsMaxed(UpgradeType type) => type switch
     {
+        UpgradeType.OverclockCPU => cpuLevel >= maxCpuLevel,
         UpgradeType.UpgradeRAM => Mathf.Approximately(GetCurrentFireRate(), minFireRate),
+        UpgradeType.DoubleShot => doubleShotLevel >= maxDoubleShotLevel,
+        UpgradeType.PiercingBeam => piercingBeamLevel >= maxPiercingBeamLevel,
+        UpgradeType.Firewall => false, // xem chú thích trên - đừng thêm trần cho track này
         _ => false,
     };
 
@@ -109,20 +126,17 @@ public class UpgradeManager : MonoBehaviour
     {
         UpgradeType.OverclockCPU => IsMaxed(type)
             ? "MAX LEVEL"
-            : $"Damage {GetCurrentDamage()} -> {GetNextDamage()}  (Lv {cpuLevel + 1})",
+            : $"Damage {GetCurrentDamage()} -> {GetNextDamage()}  (Lv {cpuLevel + 1}/{maxCpuLevel})",
         UpgradeType.UpgradeRAM => IsMaxed(type)
             ? "MAX LEVEL"
             : $"Fire Rate {GetCurrentFireRate():0.00}s -> {GetNextFireRate():0.00}s  (Lv {ramLevel + 1})",
         UpgradeType.Firewall => $"Server +{firewallHpPerLevel} HP",
         UpgradeType.DoubleShot => IsMaxed(type)
             ? "MAX LEVEL"
-            : $"Bullets {GetCurrentBulletsPerShot()} -> {GetNextBulletsPerShot()}  (Lv {doubleShotLevel + 1})",
-        UpgradeType.Explosive => IsMaxed(type)
-            ? "MAX LEVEL"
-            : $"Explosion Radius {GetCurrentExplosionRadius():0.0}m -> {GetNextExplosionRadius():0.0}m  (Lv {explosiveLevel + 1})",
+            : $"Bullets {GetCurrentBulletsPerShot()} -> {GetNextBulletsPerShot()}  (Lv {doubleShotLevel + 1}/{maxDoubleShotLevel})",
         UpgradeType.PiercingBeam => IsMaxed(type)
             ? "MAX LEVEL"
-            : $"Pierce {GetCurrentPierces()} -> {GetNextPierces()}  (Lv {piercingBeamLevel + 1})",
+            : $"Pierce {GetCurrentPierces()} -> {GetNextPierces()}  (Lv {piercingBeamLevel + 1}/{maxPiercingBeamLevel})",
         _ => string.Empty,
     };
 
@@ -132,7 +146,6 @@ public class UpgradeManager : MonoBehaviour
         UpgradeType.UpgradeRAM => "Upgrade RAM",
         UpgradeType.Firewall => "Firewall",
         UpgradeType.DoubleShot => "Double Shot",
-        UpgradeType.Explosive => "Explosive Bullet",
         UpgradeType.PiercingBeam => "Piercing Beam",
         _ => string.Empty,
     };
@@ -145,7 +158,6 @@ public class UpgradeManager : MonoBehaviour
             UpgradeType.UpgradeRAM,
             UpgradeType.Firewall,
             UpgradeType.DoubleShot,
-            UpgradeType.Explosive,
             UpgradeType.PiercingBeam,
         };
 
@@ -222,12 +234,6 @@ public class UpgradeManager : MonoBehaviour
                 playerShooting?.SetBulletsPerShot(GetCurrentBulletsPerShot());
                 break;
 
-            case UpgradeType.Explosive:
-                RunProgress.AddPowerUpLevel(type);
-                explosiveLevel = RunProgress.PowerUpExplosiveLevel;
-                playerShooting?.SetExplosionRadius(GetCurrentExplosionRadius());
-                break;
-
             case UpgradeType.PiercingBeam:
                 RunProgress.AddPowerUpLevel(type);
                 piercingBeamLevel = RunProgress.PowerUpPiercingBeamLevel;
@@ -243,8 +249,6 @@ public class UpgradeManager : MonoBehaviour
     private int GetNextDamage() => baseDamage + (cpuLevel + 1) * damagePerCpuLevel;
     private int GetCurrentBulletsPerShot() => baseBulletsPerShot + doubleShotLevel * bulletsPerDoubleShotLevel;
     private int GetNextBulletsPerShot() => baseBulletsPerShot + (doubleShotLevel + 1) * bulletsPerDoubleShotLevel;
-    private float GetCurrentExplosionRadius() => baseExplosionRadius + explosiveLevel * explosionRadiusPerLevel;
-    private float GetNextExplosionRadius() => baseExplosionRadius + (explosiveLevel + 1) * explosionRadiusPerLevel;
     private int GetCurrentPierces() => baseBulletPierces + piercingBeamLevel * piercesPerBeamLevel;
     private int GetNextPierces() => baseBulletPierces + (piercingBeamLevel + 1) * piercesPerBeamLevel;
 
@@ -264,7 +268,6 @@ public class UpgradeManager : MonoBehaviour
         ramLevel = RunProgress.PowerUpRamLevel;
         firewallLevel = RunProgress.PowerUpFirewallLevel;
         doubleShotLevel = RunProgress.PowerUpDoubleShotLevel;
-        explosiveLevel = RunProgress.PowerUpExplosiveLevel;
         piercingBeamLevel = RunProgress.PowerUpPiercingBeamLevel;
     }
 
@@ -273,7 +276,6 @@ public class UpgradeManager : MonoBehaviour
         playerShooting?.SetBulletDamage(GetCurrentDamage());
         playerShooting?.SetFireRate(GetCurrentFireRate());
         playerShooting?.SetBulletsPerShot(GetCurrentBulletsPerShot());
-        playerShooting?.SetExplosionRadius(GetCurrentExplosionRadius());
         playerShooting?.SetBulletPierces(GetCurrentPierces());
 
         if (firewallLevel > 0)

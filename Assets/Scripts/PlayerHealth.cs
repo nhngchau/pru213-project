@@ -34,6 +34,10 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     private Rigidbody2D rb;
     private ServerCore server;
 
+    // Đếm số nguồn đang cấp bất tử (hồi sinh, dash...) để nguồn kết thúc trước
+    // không tắt nhầm bất tử mà nguồn khác vẫn đang giữ.
+    private int invulnerabilityCount;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -164,7 +168,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
     private IEnumerator InvulnerabilityRoutine()
     {
-        IsInvulnerable = true;
+        PushInvulnerability();
 
         float elapsed = 0f;
         while (elapsed < invulnerableDuration)
@@ -183,7 +187,40 @@ public class PlayerHealth : MonoBehaviour, IDamageable
             spriteRenderer.enabled = true;
         }
 
-        IsInvulnerable = false;
+        PopInvulnerability();
+    }
+
+    /// <summary>
+    /// Cấp bất tử trong duration giây — dùng cho i-frame của dash. Không nhấp nháy sprite
+    /// để phân biệt với bất tử sau hồi sinh.
+    /// </summary>
+    public void GrantInvulnerability(float duration)
+    {
+        if (IsDown || duration <= 0f)
+        {
+            return;
+        }
+
+        StartCoroutine(TemporaryInvulnerabilityRoutine(duration));
+    }
+
+    private IEnumerator TemporaryInvulnerabilityRoutine(float duration)
+    {
+        PushInvulnerability();
+        yield return new WaitForSeconds(duration);
+        PopInvulnerability();
+    }
+
+    private void PushInvulnerability()
+    {
+        invulnerabilityCount++;
+        IsInvulnerable = true;
+    }
+
+    private void PopInvulnerability()
+    {
+        invulnerabilityCount = Mathf.Max(0, invulnerabilityCount - 1);
+        IsInvulnerable = invulnerabilityCount > 0;
     }
 
     private void SetActiveState(bool active)

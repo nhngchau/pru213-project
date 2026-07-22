@@ -3,7 +3,13 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "WeaponConfig", menuName = "The Senior Defender/Weapon Config")]
 public class WeaponConfig : ScriptableObject
 {
-    [Header("Weapon")]
+    [Header("Shop & Identity")]
+    public string weaponID = "default_gun";
+    public string weaponName = "Basic Blaster";
+    public int price = 0; // 0 means unlocked by default
+    public Sprite weaponSprite;
+
+    [Header("Weapon Stats")]
     [Min(0.05f)] public float fireRate = 0.15f;
     [Min(1)] public int bulletDamage = 10;
     [Min(1)] public int bulletsPerShot = 1;

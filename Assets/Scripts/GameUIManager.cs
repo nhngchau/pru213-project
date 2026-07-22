@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 using UnityScreenNavigator.Runtime.Core.Modal;
 
 /// <summary>
@@ -31,6 +33,8 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] private GameObject pausePanel;
 
     private bool hasOpenModal;
+    private Queue<System.Action> modalQueue = new Queue<System.Action>();
+    private bool isProcessingQueue = false;
 
     private void Awake()
     {
@@ -75,7 +79,13 @@ public class GameUIManager : MonoBehaviour
     {
         if (modalContainer != null && hasOpenModal)
         {
-            modalContainer.Pop(playAnimations).OnTerminate += () => hasOpenModal = false;
+            EnqueueModalAction(() => 
+            {
+                if (hasOpenModal)
+                {
+                    modalContainer.Pop(playAnimations).OnTerminate += () => hasOpenModal = false;
+                }
+            });
             return;
         }
 
@@ -124,6 +134,7 @@ public class GameUIManager : MonoBehaviour
     {
         if (isPaused)
         {
+            EnsurePausePanelHasAudioSettings();
             ShowScreen(pauseModalKey, pausePanel);
         }
         else
@@ -138,14 +149,47 @@ public class GameUIManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Đảm bảo màn pause có phần chỉnh âm lượng.
+    ///
+    /// Ba tình huống, và cả ba đều gặp trong project này:
+    /// - Có PauseModal.prefab trong Resources -> Navigator lo, không đụng vào.
+    /// - Chưa gán pausePanel -> dựng hẳn một bảng settings lúc chạy (giống ShowShop()).
+    /// - Đã có PausePanel trong scene nhưng chỉ là khung rỗng -> gắn SettingsPanelUI vào chính nó,
+    ///   phần EnsureRuntimeLayout() bên trong sẽ tự dựng slider. Gắn được cả khi object đang tắt:
+    ///   Awake() chỉ chạy lúc nó được bật lên, tức đúng lúc ShowScreen() gọi SetActive(true).
+    /// </summary>
+    private void EnsurePausePanelHasAudioSettings()
+    {
+        if (CanShowWithNavigator(pauseModalKey))
+        {
+            return;
+        }
+
+        if (pausePanel == null)
+        {
+            pausePanel = SettingsPanelUI.CreateRuntimePanel(GetUiRoot());
+            pausePanel.SetActive(false);
+            return;
+        }
+
+        if (pausePanel.GetComponent<SettingsPanelUI>() == null)
+        {
+            pausePanel.AddComponent<SettingsPanelUI>();
+        }
+    }
+
     private void ShowScreen(string resourceKey, GameObject fallbackPanel)
     {
         ResolveModalContainer();
 
         if (CanShowWithNavigator(resourceKey))
         {
-            hasOpenModal = true;
-            modalContainer.Push(resourceKey, playAnimations).OnTerminate += () => { };
+            EnqueueModalAction(() => 
+            {
+                hasOpenModal = true;
+                modalContainer.Push(resourceKey, playAnimations).OnTerminate += () => { };
+            });
             return;
         }
 
@@ -153,6 +197,34 @@ public class GameUIManager : MonoBehaviour
         {
             fallbackPanel.SetActive(true);
         }
+    }
+
+    private void EnqueueModalAction(System.Action action)
+    {
+        modalQueue.Enqueue(action);
+        if (!isProcessingQueue)
+        {
+            StartCoroutine(ProcessModalQueue());
+        }
+    }
+
+    private IEnumerator ProcessModalQueue()
+    {
+        isProcessingQueue = true;
+        while (modalQueue.Count > 0)
+        {
+            while (modalContainer != null && modalContainer.IsInTransition)
+            {
+                yield return null;
+            }
+            
+            var action = modalQueue.Dequeue();
+            action?.Invoke();
+
+            // Wait a frame so IsInTransition has a chance to turn true if a push/pop occurred
+            yield return null;
+        }
+        isProcessingQueue = false;
     }
 
     private void ResolveModalContainer()

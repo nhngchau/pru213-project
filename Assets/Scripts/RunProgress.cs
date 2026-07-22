@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
 public enum ShopBoosterType
 {
@@ -13,7 +15,7 @@ public static class RunProgress
     private const string SaveResourcePath = "RunSaveData";
     private static RunSaveData saveDataCache;
 
-    private const int DamageBonusPerLevel = 5;
+    private const int DamageBonusPerLevel = 8;
     private const float FireRateReductionPerLevel = 0.02f;
     private const int ServerHpBonusPerLevel = 150;
     private const int ExtraBulletsPerLevel = 1;
@@ -34,14 +36,25 @@ public static class RunProgress
     public static int PowerUpRamLevel { get; private set; }
     public static int PowerUpFirewallLevel { get; private set; }
     public static int PowerUpDoubleShotLevel { get; private set; }
-    public static int PowerUpExplosiveLevel { get; private set; }
     public static int PowerUpPiercingBeamLevel { get; private set; }
     public static bool HasSavedRun => GetSaveData().HasSave;
+    
+    public static List<string> UnlockedWeapons { get; private set; } = new List<string>() { "default_gun" };
+    public static string EquippedWeaponID { get; private set; } = "default_gun";
 
     public static int StarterDamageBonus => StarterDamageLevel * DamageBonusPerLevel;
     public static float StarterFireRateReduction => StarterFireRateLevel * FireRateReductionPerLevel;
     public static int ServerHpBonus => ServerArmorLevel * ServerHpBonusPerLevel;
     public static int ExtraBulletsBonus => ExtraBulletsLevel * ExtraBulletsPerLevel;
+
+    /// <summary>
+    /// Tổng số power-up đã lấy trong run này. KHÔNG reset theo stage (khác với
+    /// PlayerProgression.Level vốn chỉ đếm trong một stage), nên đây mới là con số trả lời đúng
+    /// câu hỏi "tôi đã mạnh lên bao nhiêu" và là thứ nên hiện trên HUD.
+    /// </summary>
+    public static int TotalPowerUpLevels =>
+        PowerUpCpuLevel + PowerUpRamLevel + PowerUpFirewallLevel
+        + PowerUpDoubleShotLevel + PowerUpPiercingBeamLevel;
 
     public static int NextStage => Stage + 1;
     public static float EnemyHealthMultiplier => GetEnemyHealthMultiplier(Stage);
@@ -51,14 +64,19 @@ public static class RunProgress
 
     public static float GetEnemyHealthMultiplier(int stage)
     {
-        // 1.55^(stage-1): stage 1=×1, stage 5=×5.7, stage 10=×51
-        return Mathf.Pow(1.55f, Mathf.Max(0, stage - 1));
+        // 1.28^(stage-1): stage 1=×1, stage 5=×2.7, stage 10=×9.3
+        // Damage của người chơi tăng tuyến tính (+5 mỗi level CPU/booster) nên hệ số mũ phải nhỏ,
+        // nếu không stage 7 trở đi là bức tường không thể phá.
+        return Mathf.Pow(1.28f, Mathf.Max(0, stage - 1));
     }
 
     public static float GetEnemyDamageMultiplier(int stage)
     {
-        // Cùng công thức HP để cân đối
-        return Mathf.Pow(1.55f, Mathf.Max(0, stage - 1));
+        // 1.12^(stage-1): stage 1=×1, stage 5=×1.6, stage 10=×2.8
+        // TÁCH khỏi công thức HP một cách có chủ đích: máu Server chỉ tăng tuyến tính (+50%/stage,
+        // xem ServerCore.Start), nên damage mà tăng cùng nhịp với HP quái thì stage cuối chỉ cần
+        // hơn chục con lọt lưới là Server chết ngay.
+        return Mathf.Pow(1.12f, Mathf.Max(0, stage - 1));
     }
 
     public static float GetEnemySpawnRateMultiplier(int stage)
@@ -69,8 +87,10 @@ public static class RunProgress
 
     public static int GetEnemyGroupBonus(int stage)
     {
-        // +1 mỗi stage (tăng mạnh hơn 0.75 cũ): stage 1=+0, stage 10=+9
-        return Mathf.Max(0, stage - 1);
+        // +1 mỗi stage nhưng chặn ở +4: stage 1=+0, stage 5=+4, stage 10=+4.
+        // Số quái mỗi nhóm đã nhân với tốc độ spawn (×2.35 ở stage 10) và với máu quái, nên để nó
+        // tăng không giới hạn là dồn ba hệ số nhân lên nhau.
+        return Mathf.Min(4, Mathf.Max(0, stage - 1));
     }
 
     public static string GetStageDifficultySummary(int stage)
@@ -81,7 +101,11 @@ public static class RunProgress
     public static void SetDataPack(int amount)
     {
         DataPack = Mathf.Max(0, amount);
-        SaveRun();
+
+        // Không flush xuống đĩa ở đây: hàm này chạy mỗi lần hạ một con quái (~104 lần mỗi stage).
+        // Các mốc thật sự quan trọng — qua stage, mua booster, chọn power-up, thua — đều flush đầy đủ.
+        SaveRun(flushToDisk: false);
+
         GameEvents.RaiseDataPackChanged(DataPack);
     }
 
@@ -138,7 +162,6 @@ public static class RunProgress
         UpgradeType.UpgradeRAM => PowerUpRamLevel,
         UpgradeType.Firewall => PowerUpFirewallLevel,
         UpgradeType.DoubleShot => PowerUpDoubleShotLevel,
-        UpgradeType.Explosive => PowerUpExplosiveLevel,
         UpgradeType.PiercingBeam => PowerUpPiercingBeamLevel,
         _ => 0,
     };
@@ -158,9 +181,6 @@ public static class RunProgress
                 break;
             case UpgradeType.DoubleShot:
                 PowerUpDoubleShotLevel++;
-                break;
-            case UpgradeType.Explosive:
-                PowerUpExplosiveLevel++;
                 break;
             case UpgradeType.PiercingBeam:
                 PowerUpPiercingBeamLevel++;
@@ -248,8 +268,12 @@ public static class RunProgress
         PowerUpRamLevel          = Mathf.Max(0, saveData.PowerUpRamLevel);
         PowerUpFirewallLevel     = Mathf.Max(0, saveData.PowerUpFirewallLevel);
         PowerUpDoubleShotLevel   = Mathf.Max(0, saveData.PowerUpDoubleShotLevel);
-        PowerUpExplosiveLevel    = Mathf.Max(0, saveData.PowerUpExplosiveLevel);
         PowerUpPiercingBeamLevel = Mathf.Max(0, saveData.PowerUpPiercingBeamLevel);
+
+        UnlockedWeapons = saveData.UnlockedWeapons.Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).ToList();
+        if (UnlockedWeapons.Count == 0) UnlockedWeapons.Add("default_gun");
+        
+        EquippedWeaponID = string.IsNullOrEmpty(saveData.EquippedWeaponID) ? "default_gun" : saveData.EquippedWeaponID;
 
         GameEvents.RaiseDataPackChanged(DataPack);
         return true;
@@ -269,14 +293,15 @@ public static class RunProgress
         GameEvents.RaiseDataPackChanged(DataPack);
     }
 
-    private static void SaveRun()
+    private static void SaveRun(bool flushToDisk = true)
     {
+        string unlockedStr = string.Join(",", UnlockedWeapons);
         GetSaveData().Save(
             Stage, DataPack,
             StarterDamageLevel, StarterFireRateLevel, ServerArmorLevel, ExtraBulletsLevel,
             PowerUpCpuLevel, PowerUpRamLevel, PowerUpFirewallLevel,
-            PowerUpDoubleShotLevel, PowerUpExplosiveLevel, PowerUpPiercingBeamLevel,
-            CheckpointStage);
+            PowerUpDoubleShotLevel, PowerUpPiercingBeamLevel,
+            CheckpointStage, unlockedStr, EquippedWeaponID, flushToDisk);
     }
 
     private static RunSaveData GetSaveData()
@@ -304,7 +329,6 @@ public static class RunProgress
         PowerUpRamLevel = 0;
         PowerUpFirewallLevel = 0;
         PowerUpDoubleShotLevel = 0;
-        PowerUpExplosiveLevel = 0;
         PowerUpPiercingBeamLevel = 0;
     }
 
@@ -317,4 +341,22 @@ public static class RunProgress
         Debug.Log($"[DebugPanel] Stage set to {Stage}");
     }
 #endif
+
+    public static void UnlockWeapon(string weaponID)
+    {
+        if (!UnlockedWeapons.Contains(weaponID))
+        {
+            UnlockedWeapons.Add(weaponID);
+            SaveRun();
+        }
+    }
+
+    public static void EquipWeapon(string weaponID)
+    {
+        if (UnlockedWeapons.Contains(weaponID))
+        {
+            EquippedWeaponID = weaponID;
+            SaveRun();
+        }
+    }
 }

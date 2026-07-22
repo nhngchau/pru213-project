@@ -36,6 +36,8 @@ public static class GameEvents
     public static event Action<int> OnWaveEnded;
     /// <summary>Build progress changed; argument = percent 0..100 (for the HUD bar).</summary>
     public static event Action<float> OnBuildProgressChanged;
+    /// <summary>Số bug đang chặn Build Progress thay đổi; args = số lượng còn sống, tên loại bug.</summary>
+    public static event Action<int, string> OnBuildBlockedChanged;
 
     // --- Upgrade ---------------------------------------------------------
     /// <summary>An upgrade was purchased (UI should refresh costs / affordability).</summary>
@@ -65,6 +67,7 @@ public static class GameEvents
     public static void RaiseWaveStarted(int wave) => OnWaveStarted?.Invoke(wave);
     public static void RaiseWaveEnded(int wave) => OnWaveEnded?.Invoke(wave);
     public static void RaiseBuildProgressChanged(float percent) => OnBuildProgressChanged?.Invoke(percent);
+    public static void RaiseBuildBlockedChanged(int count, string bugName) => OnBuildBlockedChanged?.Invoke(count, bugName);
     public static void RaiseUpgradePurchased() => OnUpgradePurchased?.Invoke();
     public static void RaiseContinueRequested() => OnContinueRequested?.Invoke();
     public static void RaiseGameOver() => OnGameOver?.Invoke();

@@ -203,7 +203,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: BUILD SUCCESSFUL, PROMO TO NEXT LEVEL
+  m_text: BUILD SUCCESSFUL, PROMO TO NEXT STAGE
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b633915a7eab00342a258e5c2f50a75f, type: 2}
   m_sharedMaterial: {fileID: -5571592025542048100, guid: b633915a7eab00342a258e5c2f50a75f, type: 2}
@@ -2341,7 +2341,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Level 1
+  m_text: Stage 1 complete
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b633915a7eab00342a258e5c2f50a75f, type: 2}
   m_sharedMaterial: {fileID: -5571592025542048100, guid: b633915a7eab00342a258e5c2f50a75f, type: 2}
@@ -3209,7 +3209,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8982162016510900190, guid: 8e9a29e78025dba4c8c3ee00e8b7160c, type: 3}
       propertyPath: m_text
-      value: Next level
+      value: Next Stage
       objectReference: {fileID: 0}
     - target: {fileID: 8982162016510900190, guid: 8e9a29e78025dba4c8c3ee00e8b7160c, type: 3}
       propertyPath: m_fontSize

@@ -169,7 +169,36 @@ public class ShopPanelUI : Modal
             return;
         }
 
+        // Phải chốt cờ TRƯỚC khi gọi AdvanceStage: nó raise GameCompleted, GameUIManager xử lý
+        // đồng bộ và gọi ClearSavedRun() đưa Stage về 1, nên đọc RunProgress.Stage sau đó là sai.
+        bool wasFinalStage = RunProgress.Stage >= RunProgress.MaxStage;
+
         RunProgress.AdvanceStage();
+
+        if (wasFinalStage)
+        {
+            // AdvanceStage() vừa mở WinModal của màn kết. Load scene lúc này là tự bắn vào chân:
+            // LoadSceneAfterClosingModal() pop đúng cái modal đó rồi ném người chơi vào stage 1.
+            // Để modal đứng yên và chỉ khoá đường đi tiếp; nút Main Menu vẫn sống làm lối thoát.
+            if (buyButtons != null)
+            {
+                foreach (Button button in buyButtons)
+                {
+                    if (button != null)
+                    {
+                        button.interactable = false;
+                    }
+                }
+            }
+
+            if (nextStageButton != null)
+            {
+                nextStageButton.interactable = false;
+            }
+
+            return;
+        }
+
         LeaveShopAndLoadScene("GameScene");
     }
 

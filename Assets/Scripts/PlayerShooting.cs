@@ -19,7 +19,6 @@ public class PlayerShooting : MonoBehaviour
     [SerializeField] private int bulletDamage = 10;         // Damage per bullet. Overclock CPU raises this (+5 / level).
     [SerializeField] private int bulletsPerShot = 1;        // How many bullets fire at once. Upgrades can raise this to multi-shot.
     [SerializeField] private float spreadAngle = 15f;       // Half-angle of the bullet fan in degrees. Bullets are spread evenly across [-spreadAngle, +spreadAngle].
-    [SerializeField] private float explosionRadius;
     [SerializeField] private int bulletPierces;
 
     [Header("Recoil")]
@@ -72,12 +71,10 @@ public class PlayerShooting : MonoBehaviour
     public void SetFireRate(float value) => fireRate = Mathf.Max(0.1f, value);
     public void SetBulletDamage(int value) => bulletDamage = value;
     public void SetBulletsPerShot(int value) => bulletsPerShot = Mathf.Max(1, value);
-    public void SetExplosionRadius(float value) => explosionRadius = Mathf.Max(0f, value);
     public void SetBulletPierces(int value) => bulletPierces = Mathf.Max(0, value);
     public float FireRate => fireRate;
-    public int BulletDamage => bulletDamage; // read by PlayerUltimate so its damage scales with upgrades
+    public int BulletDamage => bulletDamage;
     public int BulletsPerShot => bulletsPerShot;
-    public float ExplosionRadius => explosionRadius;
     public int BulletPierces => bulletPierces;
 
     void Update()
@@ -125,7 +122,7 @@ public class PlayerShooting : MonoBehaviour
             Bullet bullet = bulletPool.Get();
             bullet.transform.SetPositionAndRotation(spawnPosition, Quaternion.Euler(0f, 0f, finalAngle));
             bullet.SetDamage(bulletDamage);
-            bullet.SetModifiers(explosionRadius, bulletPierces);
+            bullet.SetModifiers(bulletPierces);
             bullet.Launch();
         }
 
@@ -254,17 +251,37 @@ public class PlayerShooting : MonoBehaviour
 
     private void ApplyConfig()
     {
+        if (WeaponManager.Instance != null)
+        {
+            var equipped = WeaponManager.Instance.GetEquippedWeapon();
+            if (equipped != null) weaponConfig = equipped;
+        }
+
         if (weaponConfig == null)
         {
             ApplyRunBoosters();
             return;
         }
 
+        // Apply sprite to gunPivot if it exists
+        if (weaponConfig.weaponSprite != null && gunPivot != null)
+        {
+            if (gunPivot.TryGetComponent(out SpriteRenderer sr))
+            {
+                sr.sprite = weaponConfig.weaponSprite;
+            }
+            else
+            {
+                // check children for sprite renderer
+                var childSr = gunPivot.GetComponentInChildren<SpriteRenderer>();
+                if (childSr != null) childSr.sprite = weaponConfig.weaponSprite;
+            }
+        }
+
         fireRate = weaponConfig.fireRate;
         bulletDamage = weaponConfig.bulletDamage;
         bulletsPerShot = weaponConfig.bulletsPerShot;
         spreadAngle = weaponConfig.spreadAngle;
-        explosionRadius = 0f; // Reset, config doesn't have explosionRadius yet, or we can add it later if needed
         bulletPierces = weaponConfig.bulletPierces;
         recoilDistance = weaponConfig.recoilDistance;
         recoilReturnSpeed = weaponConfig.recoilReturnSpeed;

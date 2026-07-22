@@ -5,6 +5,9 @@ using UnityEngine;
 /// to reach 100%, split into waves. At the end of each non-final wave it advances the wave
 /// marker; level-up power-ups are driven by PlayerProgression instead of wave breaks. The final wave
 /// triggers the win. Pure gameplay - it only raises GameEvents and calls GameManager.
+///
+/// Tiến độ KHÔNG chạy khi còn bug chặn build (EnemyConfig.blocksBuildProgress) đang sống, nên stage
+/// dài ngắn phụ thuộc vào việc người chơi xử lý chúng nhanh hay chậm - không còn là đồng hồ đếm thuần.
 /// </summary>
 public class WaveManager : MonoBehaviour
 {
@@ -25,6 +28,10 @@ public class WaveManager : MonoBehaviour
         wavesCompleted = 0;
         Time.timeScale = 1f;
 
+        // Bộ đếm là static nên phải dọn khi vào stage mới, tránh mang rác từ stage trước sang.
+        EnemyBehavior.ResetBlockerCount();
+        GameEvents.RaiseBuildBlockedChanged(0, string.Empty);
+
         GameEvents.RaiseWaveStarted(CurrentWave);
         GameEvents.RaiseBuildProgressChanged(0f);
     }
@@ -32,6 +39,13 @@ public class WaveManager : MonoBehaviour
     void Update()
     {
         if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
+        {
+            return;
+        }
+
+        // Bug chặn build (SyntaxError) đang sống -> tiến độ đứng yên: code còn lỗi cú pháp thì
+        // không compile được. Người chơi buộc phải rời vị trí an toàn đi xử lý nó trước.
+        if (EnemyBehavior.ActiveBlockerCount > 0)
         {
             return;
         }

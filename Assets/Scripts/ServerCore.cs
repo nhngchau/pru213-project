@@ -65,8 +65,6 @@ public class ServerCore : MonoBehaviour, IDamageable
 
         RaiseHealthChanged();
 
-        Debug.Log("Server HP: " + currentHP + "/" + maxHP);
-
         if (currentHP <= 0)
         {
             if (GameManager.Instance != null)

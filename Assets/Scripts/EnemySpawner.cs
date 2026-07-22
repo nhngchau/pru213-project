@@ -17,32 +17,19 @@ public class StageEnemySet
     public GameObject[] enemyPrefabs;
 }
 
-[System.Serializable]
-public class StageBossSettings
-{
-    [Tooltip("Stage xuất hiện Boss (ví dụ: 6, 9, 10)")]
-    public int stage;
-    [Tooltip("Prefab của Boss tương ứng")]
-    public GameObject bossPrefab;
-    [Tooltip("Số lượng Boss xuất hiện")]
-    public int bossCount = 1;
-}
-
 public class EnemySpawner : MonoBehaviour
 {
     [Header("Enemy Prefabs theo Stage")]
     [Tooltip("Mỗi entry là 1 bộ enemy cho stage tương ứng. Stage không có entry → dùng entry cuối.")]
     [SerializeField] private StageEnemySet[] stageEnemySets;
 
-    [Header("Boss Settings")]
-    [Tooltip("Cấu hình Boss riêng biệt cho từng Stage")]
-    [SerializeField] private List<StageBossSettings> bossSettings = new List<StageBossSettings>();
-    [Tooltip("Thời gian chờ trước khi Boss xuất hiện (giây)")]
-    [SerializeField] private float bossSpawnDelay = 10f;
-
     [Header("Spawn Points")]
     [SerializeField] private Transform[] spawnPoints;
     [SerializeField] private float spawnInterval = 2.4f;
+
+    [Header("Wave Pacing")]
+    [Tooltip("Số giây ngừng spawn sau mỗi wave — tạo nhịp căng/nghỉ thay vì spawn đều suốt stage.")]
+    [SerializeField] private float waveBreakDuration = 3f;
 
     [Header("Group Spawn Settings")]
     [SerializeField] private int minGroupSize = 2;
@@ -65,18 +52,15 @@ public class EnemySpawner : MonoBehaviour
     private int runtimeMinGroupSize;
     private int runtimeMaxGroupSize;
     private float buildProgress01;
+    private int unlockedPrefabCount = 1;
+    private float waveBreakUntil;
 
     // Cache bộ enemy đang dùng cho stage hiện tại
     private GameObject[] currentEnemyPrefabs;
-    private StageBossSettings currentBossSetting;
 
     private void Awake()
     {
         currentEnemyPrefabs = GetEnemyPrefabsForStage(RunProgress.Stage);
-        if (bossSettings != null)
-        {
-            currentBossSetting = bossSettings.Find(b => b.stage == RunProgress.Stage);
-        }
         BuildPools();
     }
 
@@ -88,69 +72,76 @@ public class EnemySpawner : MonoBehaviour
             return new GameObject[0];
         }
 
-        // Tìm entry phù hợp nhất: entry có fromStage <= stage và lớn nhất
-        StageEnemySet best = stageEnemySets[0];
+        // Entry phù hợp = entry có fromStage lớn nhất mà vẫn <= stage hiện tại.
+        // KHÔNG giả định mảng đã được sắp xếp trong Inspector, và không giả định luôn tồn tại một
+        // entry fromStage <= stage — người chỉnh Inspector có thể xoá mất entry fromStage 1.
+        StageEnemySet best = null;
         foreach (StageEnemySet set in stageEnemySets)
         {
-            if (set.fromStage <= stage && set.fromStage >= best.fromStage)
+            if (set == null || set.fromStage > stage)
+            {
+                continue;
+            }
+
+            if (best == null || set.fromStage > best.fromStage)
             {
                 best = set;
             }
         }
 
-        return best.enemyPrefabs ?? new GameObject[0];
+        // Mọi entry đều dành cho stage cao hơn -> lấy tạm entry có fromStage thấp nhất, còn hơn
+        // là spawn rỗng rồi để người chơi đứng nhìn một stage không có gì.
+        if (best == null)
+        {
+            foreach (StageEnemySet set in stageEnemySets)
+            {
+                if (set != null && (best == null || set.fromStage < best.fromStage))
+                {
+                    best = set;
+                }
+            }
+        }
+
+        return best?.enemyPrefabs ?? new GameObject[0];
     }
 
 
     private void OnEnable()
     {
         GameEvents.OnBuildProgressChanged += HandleBuildProgressChanged;
+        GameEvents.OnWaveStarted += HandleWaveStarted;
+        GameEvents.OnWaveEnded += HandleWaveEnded;
     }
 
     private void OnDisable()
     {
         GameEvents.OnBuildProgressChanged -= HandleBuildProgressChanged;
+        GameEvents.OnWaveStarted -= HandleWaveStarted;
+        GameEvents.OnWaveEnded -= HandleWaveEnded;
+    }
+
+    /// <summary>
+    /// Wave càng cao thì càng mở khoá thêm loại enemy trong bộ của stage: wave 1 chỉ dùng prefab đầu
+    /// tiên, wave 2 thêm prefab thứ hai... Nhờ vậy độ đa dạng tăng dần theo stage mà không phải
+    /// cấu hình thêm gì trong Inspector — chỉ cần xếp stageEnemySets theo thứ tự dễ đến khó.
+    /// </summary>
+    private void HandleWaveStarted(int wave)
+    {
+        int available = currentEnemyPrefabs != null ? currentEnemyPrefabs.Length : 0;
+        unlockedPrefabCount = Mathf.Clamp(wave, 1, Mathf.Max(1, available));
+    }
+
+    // Lưu ý: WaveManager raise WaveEnded rồi WaveStarted ngay trong cùng một frame, nên khoảng nghỉ
+    // phải được đặt ở đây và KHÔNG được reset trong HandleWaveStarted.
+    private void HandleWaveEnded(int wave)
+    {
+        waveBreakUntil = Time.time + Mathf.Max(0f, waveBreakDuration);
     }
 
     private void Start()
     {
         ApplySpawnScaling();
         StartCoroutine(SpawnEnemyRoutine());
-
-        // Nếu stage hiện tại có cấu hình Boss, bắt đầu đếm ngược để spawn Boss
-        if (currentBossSetting != null && currentBossSetting.bossPrefab != null)
-        {
-            StartCoroutine(SpawnBossRoutine());
-        }
-    }
-
-    private IEnumerator SpawnBossRoutine()
-    {
-        yield return new WaitForSeconds(bossSpawnDelay);
-
-        if (GameManager.Instance != null && GameManager.Instance.IsGameEnded)
-        {
-            yield break;
-        }
-
-        if (spawnPoints == null || spawnPoints.Length == 0) yield break;
-
-        for (int i = 0; i < currentBossSetting.bossCount; i++)
-        {
-            Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
-            Vector2 spreadOffset = Random.insideUnitCircle * groupSpreadRadius;
-            Vector3 spawnPosition = spawnPoint.position + new Vector3(spreadOffset.x, spreadOffset.y, 0f);
-
-            EnemyBehavior boss = GetEnemy(currentBossSetting.bossPrefab);
-            if (boss != null)
-            {
-                boss.transform.SetPositionAndRotation(spawnPosition, spawnPoint.rotation);
-                boss.ResetState();
-                
-                // Tăng kích thước Boss cho nổi bật (tuỳ chọn)
-                boss.transform.localScale = currentBossSetting.bossPrefab.transform.localScale * 1.5f;
-            }
-        }
     }
 
     private void HandleBuildProgressChanged(float percent)
@@ -181,6 +172,13 @@ public class EnemySpawner : MonoBehaviour
             }
 
             yield return new WaitForSeconds(runtimeSpawnInterval);
+
+            // Đang trong khoảng nghỉ giữa hai wave -> chờ hết rồi mới spawn tiếp.
+            while (Time.time < waveBreakUntil)
+            {
+                yield return null;
+            }
+
             SpawnEnemyGroup();
         }
     }
@@ -206,9 +204,12 @@ public class EnemySpawner : MonoBehaviour
         int largestGroup  = Mathf.Max(runtimeMinGroupSize, runtimeMaxGroupSize);
         int groupSize     = Random.Range(smallestGroup, largestGroup + 1);
 
+        // Chỉ bốc trong số loại enemy đã được wave hiện tại mở khoá.
+        int unlocked = Mathf.Clamp(unlockedPrefabCount, 1, currentEnemyPrefabs.Length);
+
         for (int i = 0; i < groupSize; i++)
         {
-            GameObject prefab = currentEnemyPrefabs[Random.Range(0, currentEnemyPrefabs.Length)];
+            GameObject prefab = currentEnemyPrefabs[Random.Range(0, unlocked)];
             if (prefab == null) continue;
 
             Vector2 spreadOffset = Random.insideUnitCircle * groupSpreadRadius;
@@ -226,23 +227,6 @@ public class EnemySpawner : MonoBehaviour
     private void BuildPools()
     {
         enemyPools.Clear();
-
-        // Khởi tạo Pool cho Boss nếu stage hiện tại cần Boss
-        if (currentBossSetting != null && currentBossSetting.bossPrefab != null && !enemyPools.ContainsKey(currentBossSetting.bossPrefab))
-        {
-            GameObject bPrefab = currentBossSetting.bossPrefab;
-            if (bPrefab.TryGetComponent(out EnemyBehavior _))
-            {
-                enemyPools[bPrefab] = new ObjectPool<EnemyBehavior>(
-                    createFunc: () => CreateEnemy(bPrefab),
-                    actionOnGet: enemy => enemy.gameObject.SetActive(true),
-                    actionOnRelease: enemy => enemy.gameObject.SetActive(false),
-                    actionOnDestroy: enemy => Destroy(enemy.gameObject),
-                    collectionCheck: true,
-                    defaultCapacity: 1,
-                    maxSize: 5);
-            }
-        }
 
         if (currentEnemyPrefabs == null) return;
 

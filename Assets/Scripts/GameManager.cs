@@ -88,9 +88,24 @@ public class GameManager : MonoBehaviour
         Debug.Log("Build Complete! You Win!");
     }
 
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            TogglePause();
+        }
+    }
+
     public void TogglePause()
     {
         if (IsGameEnded) return;
+
+        // Modal chọn power-up cũng đang giữ Time.timeScale = 0. Cho phép pause lúc đó thì lần bấm
+        // ESC tiếp theo sẽ trả timeScale về 1 và game chạy tiếp NGAY DƯỚI modal đang mở.
+        if (PlayerProgression.Instance != null && PlayerProgression.Instance.WaitingForPowerUpChoice)
+        {
+            return;
+        }
 
         IsPaused = !IsPaused;
         Time.timeScale = IsPaused ? 0f : 1f;

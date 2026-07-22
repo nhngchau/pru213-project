@@ -30,7 +30,6 @@ public class UpgradePanelUI : Modal
 
     private readonly UpgradeType[] currentOptions = new UpgradeType[3];
     private bool hasRolledOptions;
-    private int displayedLevel = 1;
 
     void Awake()
     {
@@ -75,8 +74,6 @@ public class UpgradePanelUI : Modal
 
     public override void DidPushEnter()
     {
-        displayedLevel = PlayerProgression.Instance != null ? PlayerProgression.Instance.Level : displayedLevel;
-
         if (panelRoot != null)
         {
             panelRoot.SetActive(true);
@@ -88,8 +85,6 @@ public class UpgradePanelUI : Modal
 
     private void HandleLevelUpReady(int level)
     {
-        displayedLevel = level;
-
         if (GameUIManager.UsesNavigatorUpgradeModal)
         {
             RollOptions();
@@ -133,7 +128,10 @@ public class UpgradePanelUI : Modal
 
         if (levelText != null)
         {
-            levelText.text = $"LEVEL {displayedLevel}";
+            // Số thứ tự nâng cấp tính theo cả run, không phải level trong stage: người chơi sắp
+            // chọn cái thứ (đã lấy + 1). Giữ nguyên tên field levelText vì nó đang được wire
+            // trong scene/prefab — đổi tên field serialize sẽ làm mất tham chiếu.
+            levelText.text = $"UPGRADE #{RunProgress.TotalPowerUpLevels + 1}";
         }
 
         if (!hasRolledOptions)

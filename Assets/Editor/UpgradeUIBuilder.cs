@@ -162,51 +162,6 @@ public static class UpgradeUIBuilder
         Debug.Log("[UpgradeUIBuilder] Built the top-left Player HP bar and wired it into GameHUD. Save the scene (Ctrl+S).");
     }
 
-    [MenuItem("GDD Tools/Add Ultimate Cooldown UI")]
-    public static void AddUltimateCooldownUI()
-    {
-        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
-        if (canvas == null)
-        {
-            Debug.LogError("[UpgradeUIBuilder] No Canvas in the open scene.");
-            return;
-        }
-
-        if (canvas.transform.Find("UltimateCooldown") != null)
-        {
-            Debug.LogWarning("[UpgradeUIBuilder] 'UltimateCooldown' already exists - delete it before rebuilding.");
-            return;
-        }
-
-        Color ready = new Color(0.35f, 0.9f, 1f, 1f);
-
-        // Bottom-left square box.
-        RectTransform box = CreateChild("UltimateCooldown", canvas.transform);
-        SetAnchored(box, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(28f, 28f), new Vector2(88f, 88f));
-        Image icon = AddImage(box.gameObject, ready, UiSprite);
-
-        // Countdown number (big, centred).
-        RectTransform countRt = CreateChild("Countdown", box);
-        Stretch(countRt, 0f);
-        TextMeshProUGUI countText = AddLabel(countRt, string.Empty, 44f, Color.white, TextAlignmentOptions.Center);
-        countText.fontStyle = FontStyles.Bold;
-
-        // Small key hint at the bottom of the box.
-        RectTransform hintRt = CreateChild("KeyHint", box);
-        SetAnchored(hintRt, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 4f), new Vector2(84f, 18f));
-        AddLabel(hintRt, "RMB", 14f, Color.white, TextAlignmentOptions.Center);
-
-        // Controller on the box itself, wired up.
-        UltimateCooldownUI ui = Undo.AddComponent<UltimateCooldownUI>(box.gameObject);
-        SerializedObject so = new SerializedObject(ui);
-        WireRef(so, "iconImage", icon);
-        WireRef(so, "countdownText", countText);
-        so.ApplyModifiedProperties();
-
-        EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-        Debug.Log("[UpgradeUIBuilder] Built bottom-left Ultimate cooldown box and wired UltimateCooldownUI. Save (Ctrl+S).");
-    }
-
     // ------------------------------------------------------------ helpers
 
     private static RectTransform CreateChild(string name, Transform parent)

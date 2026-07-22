@@ -12,7 +12,6 @@ public class Bullet : MonoBehaviour
     private Rigidbody2D rb;
     private IObjectPool<Bullet> pool;
     private bool isReleased;
-    private float explosionRadius;
     private int remainingPierces;
 
     void Awake()
@@ -32,9 +31,8 @@ public class Bullet : MonoBehaviour
         damage = value;
     }
 
-    public void SetModifiers(float explosiveRad, int pierces)
+    public void SetModifiers(int pierces)
     {
-        explosionRadius = Mathf.Max(0f, explosiveRad);
         remainingPierces = Mathf.Max(0, pierces);
     }
 
@@ -59,7 +57,6 @@ public class Bullet : MonoBehaviour
             // If it hits a wall/obstacle, it should just explode or disappear
             if (IsBounceSurface(collision.gameObject))
             {
-                Explode();
                 ReturnToPool();
             }
             return;
@@ -69,12 +66,6 @@ public class Bullet : MonoBehaviour
         if (collision.TryGetComponent(out IDamageable target))
         {
             target.TakeDamage(damage);
-        }
-
-        // Explode if we have explosive radius
-        if (explosionRadius > 0f)
-        {
-            Explode();
         }
 
         // Piercing logic
@@ -87,27 +78,12 @@ public class Bullet : MonoBehaviour
         ReturnToPool();
     }
 
-    private void Explode()
-    {
-        if (explosionRadius <= 0f) return;
 
-        // Deal AoE damage to all nearby enemies (excluding the one we just hit directly, though it's fine if they take double damage from explosion, let's just do full AoE)
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
-        foreach (var col in hitEnemies)
-        {
-            if (col.CompareTag("Enemy") && col.TryGetComponent(out IDamageable target))
-            {
-                // Deal explosion damage (could be full damage or partial, let's do full)
-                target.TakeDamage(damage);
-            }
-        }
-    }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (IsBounceSurface(collision.gameObject))
         {
-            Explode();
             ReturnToPool();
         }
     }

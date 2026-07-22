@@ -12,12 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 383b7975656339f45b817a520e6f327d, type: 3}
   m_Name: SyntaxErrorConfig
   m_EditorClassIdentifier: 
+  displayName: SYNTAX ERROR
+  archetype: 0
+  blocksBuildProgress: 0
   maxHP: 10
-  moveSpeed: 1
-  damageToServer: 6
-  damageToPlayer: 6
-  damageInterval: 1
-  dataPackValue: 2
-  expReward: 10
+  moveSpeed: 1.2
+  damageToServer: 15
+  damageToPlayer: 5
+  dataPackValue: 5
+  expReward: 16
+  preferredRange: 6
+  attackInterval: 2.2
+  projectileDamage: 7
+  projectileSpeed: 7
+  projectilePrefab: {fileID: 0}
   deathDelay: 0.6
   onDeathEffectPrefab: {fileID: 677123861767867727, guid: d5e03cc7bdf651b4b84377689873ffa1, type: 3}
+  onDeathHazardPrefab: {fileID: 0}

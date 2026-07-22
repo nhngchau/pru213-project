@@ -24,8 +24,11 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
     [SerializeField] private AudioClip buttonHoverSound;
     [Tooltip("Âm thanh phát khi nhấn một button.")]
     [SerializeField] private AudioClip buttonClickSound;
-    [Range(0f, 1f)] [SerializeField] private float musicVolume = 0.5f;
-    [Range(0f, 1f)] [SerializeField] private float soundVolume = 0.8f;
+    [Range(0f, 1f)] [SerializeField] private float defaultMusicVolume = 0.5f;
+    [Range(0f, 1f)] [SerializeField] private float defaultSoundVolume = 0.8f;
+
+    private float musicVolume;
+    private float soundVolume;
 
     private Vector3 normalScale;
     private Vector3 targetScale;
@@ -36,6 +39,10 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         normalScale = transform.localScale;
         targetScale = normalScale;
+
+        // Load volume from PlayerPrefs or use default
+        musicVolume = PlayerPrefs.GetFloat("MusicVolume", defaultMusicVolume);
+        soundVolume = PlayerPrefs.GetFloat("SFXVolume", defaultSoundVolume);
 
         musicSource = CreateAudioSource("Menu Music", true, musicVolume);
         soundSource = CreateAudioSource("Menu SFX", false, soundVolume);
@@ -87,6 +94,45 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
         {
             guidePanel.SetActive(false);
         }
+    }
+
+    public void OpenWeaponShop()
+    {
+        Canvas canvas = ResolveCanvas();
+        if (canvas == null)
+        {
+            Debug.LogError("MainMenuController: không tìm thấy Canvas nào trong scene để mở Weapon Shop.");
+            return;
+        }
+
+        GameObject panel = WeaponShopUI.CreateRuntimePanel(canvas.transform);
+        panel.transform.SetAsLastSibling();
+    }
+
+    /// <summary>
+    /// Canvas để gắn panel vào.
+    ///
+    /// KHÔNG chỉ dùng GetComponentInParent: MainMenuManager nằm ở gốc scene, không nằm dưới Canvas,
+    /// nên hàm đó luôn trả null và mọi panel mở từ menu đều chết lặng.
+    /// </summary>
+    private Canvas ResolveCanvas()
+    {
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas != null)
+        {
+            return canvas;
+        }
+
+        // Ưu tiên canvas vẽ đè lên toàn màn hình, tránh vớ phải canvas world-space của HP bar.
+        foreach (Canvas candidate in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+        {
+            if (candidate.renderMode != RenderMode.WorldSpace)
+            {
+                return candidate.rootCanvas != null ? candidate.rootCanvas : candidate;
+            }
+        }
+
+        return null;
     }
 
     public void StartGame()
@@ -141,9 +187,17 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
         musicSource.Play();
     }
 
+    /// <summary>
+    /// Quét toàn scene chứ không chỉ con của object này.
+    ///
+    /// MainMenuManager nằm ở gốc scene và KHÔNG có con nào — nó không phải cha của đám nút trong
+    /// Canvas. Dùng GetComponentsInChildren ở đây sẽ trả về mảng rỗng và không nút nào có tiếng.
+    /// </summary>
     private void RegisterButtonSounds()
     {
-        foreach (Button button in GetComponentsInChildren<Button>(true))
+        Button[] buttons = FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        foreach (Button button in buttons)
         {
             button.onClick.AddListener(PlayClickSound);
 
@@ -200,15 +254,16 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
             return;
         }
 
-        Transform found = FindChildRecursive(transform.root, "ContinueButton");
-        if (found == null)
+        // Quét theo tên trên toàn scene. transform.root ở đây chính là MainMenuManager (nó ở gốc và
+        // không có con), nên tìm theo cây con sẽ không bao giờ thấy nút nằm trong Canvas.
+        foreach (Button button in FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
-            found = FindChildRecursive(transform.root, "Continue");
-        }
-
-        if (found != null)
-        {
-            continueButton = found.GetComponent<Button>();
+            string objectName = button.name.ToLowerInvariant();
+            if (objectName.Contains("continue"))
+            {
+                continueButton = button;
+                return;
+            }
         }
     }
 
@@ -247,5 +302,41 @@ public class MainMenuController : MonoBehaviour, IPointerEnterHandler, IPointerE
         {
             soundSource.PlayOneShot(clip, soundVolume);
         }
+    }
+
+    // --- Dynamic Volume Settings ---
+    // Không Save() ở đây — xem chú thích cùng chỗ trong GameAudioManager.
+    public void SetMusicVolume(float volume)
+    {
+        musicVolume = volume;
+        if (musicSource != null)
+        {
+            musicSource.volume = musicVolume;
+        }
+        PlayerPrefs.SetFloat("MusicVolume", musicVolume);
+    }
+
+    public void SetSFXVolume(float volume)
+    {
+        soundVolume = volume;
+        if (soundSource != null)
+        {
+            soundSource.volume = soundVolume;
+        }
+        PlayerPrefs.SetFloat("SFXVolume", soundVolume);
+    }
+
+    /// <summary>Mở bảng âm lượng ở Main Menu. Nối hàm này vào OnClick của nút Settings.</summary>
+    public void OpenSettings()
+    {
+        Canvas canvas = ResolveCanvas();
+        if (canvas == null)
+        {
+            Debug.LogError("MainMenuController: không tìm thấy Canvas nào trong scene để mở Settings.");
+            return;
+        }
+
+        GameObject panel = SettingsPanelUI.CreateRuntimePanel(canvas.transform);
+        panel.transform.SetAsLastSibling();
     }
 }

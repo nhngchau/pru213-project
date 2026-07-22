@@ -7,8 +7,15 @@ public class PlayerProgression : MonoBehaviour
 
     [Header("Leveling")]
     [SerializeField] private int startingLevel = 1;
-    [SerializeField] private int baseExpRequired = 30;
-    [SerializeField] private int expRequiredGrowth = 20;
+    [Tooltip("EXP cần để lên cấp 2. Các cấp sau nhân dồn theo expGrowthMultiplier.")]
+    [SerializeField] private int baseExpRequired = 150;
+    [Tooltip("Mỗi cấp yêu cầu EXP gấp ngần này lần cấp trước. Lớn hơn 1 = lên cấp thưa dần.\n" +
+             "Phải là cấp số nhân: số quái mỗi nhóm và tốc độ spawn đều tăng theo stage, nên " +
+             "đường cong cộng tuyến tính sẽ bị lượng EXP kiếm được vượt mặt rất nhanh.\n" +
+             "Lưu ý: EXP reset về cấp 1 mỗi stage (xem Start) nhưng level power-up thì giữ nguyên " +
+             "cả run, nên đường cong này quyết định TỔNG số power-up người chơi gom được.")]
+    [Min(1.05f)]
+    [SerializeField] private float expGrowthMultiplier = 1.6f;
 
     private int level;
     private int currentExp;
@@ -91,8 +98,9 @@ public class PlayerProgression : MonoBehaviour
             return;
         }
 
+        // Cố ý KHÔNG log ở đây: hàm này chạy mỗi lần hạ một con quái (~130 lần/stage), mà Debug.Log
+        // kèm stack trace mỗi lần gọi. Thanh EXP trên HUD đã hiện đúng current/required rồi.
         currentExp += amount;
-        Debug.Log($"PlayerProgression: +{amount} EXP ({currentExp}/{RequiredExp})");
 
         if (waitingForPowerUpChoice)
         {
@@ -133,7 +141,8 @@ public class PlayerProgression : MonoBehaviour
 
     private int GetRequiredExp(int targetLevel)
     {
-        return baseExpRequired + Mathf.Max(0, targetLevel - 1) * expRequiredGrowth;
+        int steps = Mathf.Max(0, targetLevel - 1);
+        return Mathf.Max(1, Mathf.RoundToInt(baseExpRequired * Mathf.Pow(expGrowthMultiplier, steps)));
     }
 
     private void RaiseExpChanged()

@@ -19,9 +19,10 @@ public class RunSaveData : ScriptableObject
     private const string KeyPowerUpRam           = "SD_PU_Ram";
     private const string KeyPowerUpFirewall      = "SD_PU_Firewall";
     private const string KeyPowerUpDoubleShot    = "SD_PU_DoubleShot";
-    private const string KeyPowerUpExplosive     = "SD_PU_Explosive";
     private const string KeyPowerUpPiercingBeam  = "SD_PU_PiercingBeam";
     private const string KeyCheckpointStage      = "SD_CheckpointStage"; // stage mốc gần nhất đã vượt qua
+    private const string KeyUnlockedWeapons      = "SD_UnlockedWeapons";
+    private const string KeyEquippedWeapon       = "SD_EquippedWeapon";
 
     // --- Properties đọc từ PlayerPrefs ---
     public bool HasSave              => PlayerPrefs.GetInt(KeyHasSave, 0) == 1;
@@ -38,19 +39,31 @@ public class RunSaveData : ScriptableObject
     public int  PowerUpRamLevel          => PlayerPrefs.GetInt(KeyPowerUpRam, 0);
     public int  PowerUpFirewallLevel     => PlayerPrefs.GetInt(KeyPowerUpFirewall, 0);
     public int  PowerUpDoubleShotLevel   => PlayerPrefs.GetInt(KeyPowerUpDoubleShot, 0);
-    public int  PowerUpExplosiveLevel    => PlayerPrefs.GetInt(KeyPowerUpExplosive, 0);
     public int  PowerUpPiercingBeamLevel => PlayerPrefs.GetInt(KeyPowerUpPiercingBeam, 0);
 
     /// <summary>Stage mốc gần nhất đã vượt qua (1 nếu chưa vượt milestone nào).</summary>
     public int  CheckpointStage          => PlayerPrefs.GetInt(KeyCheckpointStage, 1);
+    
+    public string UnlockedWeapons        => PlayerPrefs.GetString(KeyUnlockedWeapons, "default_gun");
+    public string EquippedWeaponID       => PlayerPrefs.GetString(KeyEquippedWeapon, "default_gun");
 
-    /// <summary>Lưu toàn bộ tiến trình xuống PlayerPrefs (tự động ghi đĩa).</summary>
+    /// <summary>
+    /// Lưu toàn bộ tiến trình xuống PlayerPrefs.
+    ///
+    /// <paramref name="flushToDisk"/> = false thì chỉ ghi vào bộ nhớ, không gọi PlayerPrefs.Save().
+    /// Dùng cho những thứ thay đổi liên tục như DataPack (cộng mỗi lần giết một con quái) — Save()
+    /// ghi thẳng xuống Registry nên gọi trăm lần mỗi màn là đủ gây khựng hình.
+    /// Dữ liệu vẫn an toàn: Unity tự flush khi thoát game, và mọi mốc quan trọng đều flush thật.
+    /// </summary>
     public void Save(
         int runStage, int runDataPack,
         int damageLevel, int fireRateLevel, int armorLevel, int bulletsLevel,
         int cpuLevel, int ramLevel, int firewallLevel,
-        int doubleShotLevel, int explosiveLevel, int piercingBeamLevel,
-        int checkpointStage)
+        int doubleShotLevel, int piercingBeamLevel,
+        int checkpointStage,
+        string unlockedWeapons = null,
+        string equippedWeapon = null,
+        bool flushToDisk = true)
     {
         int bestStage = Mathf.Max(PlayerPrefs.GetInt(KeyBestStage, 1), runStage);
 
@@ -66,11 +79,16 @@ public class RunSaveData : ScriptableObject
         PlayerPrefs.SetInt(KeyPowerUpRam,        Mathf.Max(0, ramLevel));
         PlayerPrefs.SetInt(KeyPowerUpFirewall,   Mathf.Max(0, firewallLevel));
         PlayerPrefs.SetInt(KeyPowerUpDoubleShot, Mathf.Max(0, doubleShotLevel));
-        PlayerPrefs.SetInt(KeyPowerUpExplosive,  Mathf.Max(0, explosiveLevel));
         PlayerPrefs.SetInt(KeyPowerUpPiercingBeam, Mathf.Max(0, piercingBeamLevel));
         PlayerPrefs.SetInt(KeyCheckpointStage,   Mathf.Max(1, checkpointStage));
 
-        PlayerPrefs.Save(); // ghi xuống đĩa ngay lập tức
+        if (unlockedWeapons != null) PlayerPrefs.SetString(KeyUnlockedWeapons, unlockedWeapons);
+        if (equippedWeapon != null) PlayerPrefs.SetString(KeyEquippedWeapon, equippedWeapon);
+
+        if (flushToDisk)
+        {
+            PlayerPrefs.Save();
+        }
     }
 
     /// <summary>Xóa save hiện tại — BestStage được giữ lại vĩnh viễn.</summary>
@@ -87,9 +105,12 @@ public class RunSaveData : ScriptableObject
         PlayerPrefs.SetInt(KeyPowerUpRam,        0);
         PlayerPrefs.SetInt(KeyPowerUpFirewall,   0);
         PlayerPrefs.SetInt(KeyPowerUpDoubleShot, 0);
-        PlayerPrefs.SetInt(KeyPowerUpExplosive,  0);
         PlayerPrefs.SetInt(KeyPowerUpPiercingBeam, 0);
         PlayerPrefs.SetInt(KeyCheckpointStage,   1); // reset checkpoint về đầu
+        
+        // Weapon shop progress is typically kept across resets, but if Clear() means full wipe, we wipe them.
+        PlayerPrefs.SetString(KeyUnlockedWeapons, "default_gun");
+        PlayerPrefs.SetString(KeyEquippedWeapon, "default_gun");
         PlayerPrefs.Save();
         // KeyBestStage không bị xóa — kỷ lục tồn tại vĩnh viễn
     }

@@ -47,10 +47,9 @@ public class DamageFlash : MonoBehaviour
 
     private void HandleServerDamage(int current, int max)
     {
-        Debug.Log($"[DamageFlash] Server HP: {current}/{max}, lastHP: {lastServerHP}");
+        // Không log ở đây: hàm chạy mỗi lần Server đổi máu, tức mỗi con quái chạm vào.
         if (lastServerHP >= 0 && current < lastServerHP)
         {
-            Debug.Log("[DamageFlash] Flashing!");
             Flash(serverHitColor, serverFadeDuration);
         }
         lastServerHP = current;
