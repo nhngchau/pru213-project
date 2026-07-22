@@ -1418,6 +1418,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6727336402677548458, guid: e770d06168358a8409bb57ad60b4e9a4, type: 3}
   m_PrefabInstance: {fileID: 346576948}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &346576950 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6797154183764024556, guid: e770d06168358a8409bb57ad60b4e9a4, type: 3}
+  m_PrefabInstance: {fileID: 346576948}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &364771769
 GameObject:
   m_ObjectHideFlags: 0
@@ -1928,6 +1939,7 @@ MonoBehaviour:
     _exitAnimations: []
   restartButton: {fileID: 0}
   mainMenuButton: {fileID: 0}
+  scoreText: {fileID: 0}
 --- !u!114 &475351290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11263,6 +11275,53 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.62908554, y: 9.328641}
   m_EdgeRadius: 0
+--- !u!1 &1558245195
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1558245197}
+  - component: {fileID: 1558245196}
+  m_Layer: 0
+  m_Name: PauseController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1558245196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1558245195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a0cccf3040356548a62ac081b138c7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PauseController
+  pauseKey: 27
+  pauseButton: {fileID: 346576950}
+  createButtonIfMissing: 0
+--- !u!4 &1558245197
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1558245195}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1565100623
 GameObject:
   m_ObjectHideFlags: 0
@@ -12465,7 +12524,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameAudioManager
   backgroundMusic: {fileID: 8300000, guid: 0d03c9f91ed12364d98bd766f640153b, type: 3}
-  musicVolume: 0.24
   shootSound: {fileID: 8300000, guid: a0bff3e17edda6d458a90feda90fa8e3, type: 3}
   enemyDefeatedSound: {fileID: 8300000, guid: a171d42daa8c14e4699c379964346cab, type: 3}
   serverHitSound: {fileID: 8300000, guid: 3c0f6bdcb62892b4e9db7c28cbbd323f, type: 3}
@@ -12473,7 +12531,6 @@ MonoBehaviour:
   levelUpSound: {fileID: 0}
   winSound: {fileID: 8300000, guid: 3dab3b6f0cb69594483852d714e530ee, type: 3}
   gameOverSound: {fileID: 8300000, guid: 291f8f6b172df75448169ff205f1ddb0, type: 3}
-  soundVolume: 0.86
 --- !u!114 &1850386284
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14039,3 +14096,4 @@ SceneRoots:
   - {fileID: 615323197}
   - {fileID: 513517287}
   - {fileID: 1390720657}
+  - {fileID: 1558245197}

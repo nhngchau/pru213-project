@@ -85,7 +85,7 @@ public class DebugPanel : MonoBehaviour
             normal   = { textColor = new Color(0.5f, 0.5f, 0.5f) },
             alignment = TextAnchor.MiddleCenter
         };
-        GUI.Label(new Rect(cx, cy, PANEL_W, 16), "F1 = ẩn/hiện", hintStyle);
+        GUI.Label(new Rect(cx, cy, PANEL_W, 16), "F1 = show/hide", hintStyle);
         cy += 22f;
 
         // Đường kẻ ngang
@@ -93,11 +93,11 @@ public class DebugPanel : MonoBehaviour
         cy += 8f;
 
         // ── Stage hiện tại ─────────────────────────────────────────────────
-        GUI.Label(new Rect(cx, cy, PANEL_W, 22), $"Stage hiện tại: <b>{RunProgress.Stage}</b>", labelStyle);
+        GUI.Label(new Rect(cx, cy, PANEL_W, 22), $"Current Stage: <b>{RunProgress.Stage}</b>", labelStyle);
         cy += 26f;
 
         // ── Jump Stage ────────────────────────────────────────────────────
-        GUI.Label(new Rect(cx, cy, 70, 24), "Nhảy stage:", labelStyle);
+        GUI.Label(new Rect(cx, cy, 70, 24), "Jump to stage:", labelStyle);
         if (GUI.Button(new Rect(cx + 74, cy, 26, 24), "−", btnStyle))
             targetStage = Mathf.Max(1, targetStage - 1);
         GUI.Label(new Rect(cx + 103, cy, 34, 24), $"{targetStage}", labelStyle);
@@ -116,13 +116,13 @@ public class DebugPanel : MonoBehaviour
         cy += 8f;
 
         // ── God Mode ──────────────────────────────────────────────────────
-        string godLabel = godMode ? "🛡  GOD MODE : BẬT  (click để tắt)" : "🛡  GOD MODE : tắt  (click để bật)";
+        string godLabel = godMode ? "🛡  GOD MODE : ON  (click to disable)" : "🛡  GOD MODE : off  (click to enable)";
         if (GUI.Button(new Rect(cx, cy, PANEL_W, 28), godLabel, godMode ? btnGreenStyle : btnStyle))
             ToggleGodMode();
         cy += 34f;
 
         // ── Heal ──────────────────────────────────────────────────────────
-        if (GUI.Button(new Rect(cx, cy, PANEL_W, 28), "💊  Hồi máu player về full", btnStyle))
+        if (GUI.Button(new Rect(cx, cy, PANEL_W, 28), "💊  Heal player to full", btnStyle))
             HealPlayer();
         cy += 34f;
 
@@ -130,7 +130,7 @@ public class DebugPanel : MonoBehaviour
         cy += 8f;
 
         // ── Time Scale ────────────────────────────────────────────────────
-        GUI.Label(new Rect(cx, cy, 80, 24), "Tốc độ:", labelStyle);
+        GUI.Label(new Rect(cx, cy, 80, 24), "Time scale:", labelStyle);
         float bw = 56f;
         float[] scales = { 1f, 2f, 3f };
         for (int i = 0; i < scales.Length; i++)

@@ -7,6 +7,8 @@ public class GameOverUI : Modal
 {
     [SerializeField] private Button restartButton;
     [SerializeField] private Button mainMenuButton;
+    [Tooltip("Text hiển thị điểm. Để trống thì script tự tạo lúc runtime.")]
+    [SerializeField] private TMP_Text scoreText;
 
     private void Awake()
     {
@@ -19,12 +21,38 @@ public class GameOverUI : Modal
     {
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+        ShowScore();
+    }
+
+    /// <summary>Hiện điểm số của run vừa kết thúc (tạo text nếu prefab chưa có).</summary>
+    private void ShowScore()
+    {
+        if (scoreText == null)
+        {
+            RectTransform rect = RuntimeUI.CreateRect("ScoreText", transform);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, -60f);
+            rect.sizeDelta = new Vector2(620f, 90f);
+
+            scoreText = rect.gameObject.AddComponent<TextMeshProUGUI>();
+            scoreText.fontSize = 26f;
+            scoreText.alignment = TextAlignmentOptions.Center;
+            scoreText.color = new Color(1f, 0.85f, 0.30f, 1f);
+            scoreText.raycastTarget = false;
+        }
+
+        scoreText.text = $"SCORE: {RunStats.Score}\n" +
+                         $"Stage {RunProgress.Stage}  -  Level {RunProgress.PlayerLevel}  -  " +
+                         $"{RunStats.EnemiesKilled} bugs eliminated";
     }
 
     public void OnRestartClicked()
     {
         // Quay về stage mốc gần nhất (3, 6, 9) thay vì reset về stage 1
         RunProgress.RestartFromCheckpoint();
+        RunStats.Reset();
         Time.timeScale = 1f;
         SceneTransition.LoadScene("GameScene");
     }

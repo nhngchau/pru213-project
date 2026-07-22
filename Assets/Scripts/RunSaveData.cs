@@ -22,6 +22,8 @@ public class RunSaveData : ScriptableObject
     private const string KeyPowerUpExplosive     = "SD_PU_Explosive";
     private const string KeyPowerUpPiercingBeam  = "SD_PU_PiercingBeam";
     private const string KeyCheckpointStage      = "SD_CheckpointStage"; // stage mốc gần nhất đã vượt qua
+    private const string KeyPlayerLevel          = "SD_PlayerLevel";
+    private const string KeyPlayerExp            = "SD_PlayerExp";
 
     // --- Properties đọc từ PlayerPrefs ---
     public bool HasSave              => PlayerPrefs.GetInt(KeyHasSave, 0) == 1;
@@ -44,13 +46,18 @@ public class RunSaveData : ScriptableObject
     /// <summary>Stage mốc gần nhất đã vượt qua (1 nếu chưa vượt milestone nào).</summary>
     public int  CheckpointStage          => PlayerPrefs.GetInt(KeyCheckpointStage, 1);
 
+    /// <summary>Level + EXP tích luỹ của player — giữ nguyên khi sang stage mới.</summary>
+    public int  PlayerLevel              => PlayerPrefs.GetInt(KeyPlayerLevel, 1);
+    public int  PlayerExp                => PlayerPrefs.GetInt(KeyPlayerExp, 0);
+
     /// <summary>Lưu toàn bộ tiến trình xuống PlayerPrefs (tự động ghi đĩa).</summary>
     public void Save(
         int runStage, int runDataPack,
         int damageLevel, int fireRateLevel, int armorLevel, int bulletsLevel,
         int cpuLevel, int ramLevel, int firewallLevel,
         int doubleShotLevel, int explosiveLevel, int piercingBeamLevel,
-        int checkpointStage)
+        int checkpointStage,
+        int playerLevel, int playerExp)
     {
         int bestStage = Mathf.Max(PlayerPrefs.GetInt(KeyBestStage, 1), runStage);
 
@@ -69,6 +76,8 @@ public class RunSaveData : ScriptableObject
         PlayerPrefs.SetInt(KeyPowerUpExplosive,  Mathf.Max(0, explosiveLevel));
         PlayerPrefs.SetInt(KeyPowerUpPiercingBeam, Mathf.Max(0, piercingBeamLevel));
         PlayerPrefs.SetInt(KeyCheckpointStage,   Mathf.Max(1, checkpointStage));
+        PlayerPrefs.SetInt(KeyPlayerLevel,       Mathf.Max(1, playerLevel));
+        PlayerPrefs.SetInt(KeyPlayerExp,         Mathf.Max(0, playerExp));
 
         PlayerPrefs.Save(); // ghi xuống đĩa ngay lập tức
     }
@@ -90,6 +99,8 @@ public class RunSaveData : ScriptableObject
         PlayerPrefs.SetInt(KeyPowerUpExplosive,  0);
         PlayerPrefs.SetInt(KeyPowerUpPiercingBeam, 0);
         PlayerPrefs.SetInt(KeyCheckpointStage,   1); // reset checkpoint về đầu
+        PlayerPrefs.SetInt(KeyPlayerLevel,       1);
+        PlayerPrefs.SetInt(KeyPlayerExp,         0);
         PlayerPrefs.Save();
         // KeyBestStage không bị xóa — kỷ lục tồn tại vĩnh viễn
     }

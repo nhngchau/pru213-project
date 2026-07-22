@@ -38,6 +38,13 @@ public static class RunProgress
     public static int PowerUpPiercingBeamLevel { get; private set; }
     public static bool HasSavedRun => GetSaveData().HasSave;
 
+    /// <summary>
+    /// Level + EXP của player, giữ nguyên khi chuyển stage (không reset về 1/0 nữa)
+    /// nên ngưỡng lên cấp tiếp tục tăng thay vì quay lại mức khởi điểm.
+    /// </summary>
+    public static int PlayerLevel { get; private set; } = 1;
+    public static int PlayerExp { get; private set; }
+
     public static int StarterDamageBonus => StarterDamageLevel * DamageBonusPerLevel;
     public static float StarterFireRateReduction => StarterFireRateLevel * FireRateReductionPerLevel;
     public static int ServerHpBonus => ServerArmorLevel * ServerHpBonusPerLevel;
@@ -76,6 +83,22 @@ public static class RunProgress
     public static string GetStageDifficultySummary(int stage)
     {
         return $"Enemy HP x{GetEnemyHealthMultiplier(stage):0.00} | Damage x{GetEnemyDamageMultiplier(stage):0.00} | Spawn x{GetEnemySpawnRateMultiplier(stage):0.00}";
+    }
+
+    /// <summary>
+    /// Cập nhật level/exp. Chỉ ghi xuống đĩa khi <paramref name="persist"/> = true
+    /// (mỗi lần lên cấp) — các thay đổi EXP lặt vặt chỉ giữ trong bộ nhớ static,
+    /// vốn đã sống xuyên qua việc load lại scene giữa các stage.
+    /// </summary>
+    public static void SetPlayerProgress(int level, int exp, bool persist = false)
+    {
+        PlayerLevel = Mathf.Max(1, level);
+        PlayerExp = Mathf.Max(0, exp);
+
+        if (persist)
+        {
+            SaveRun();
+        }
     }
 
     public static void SetDataPack(int amount)
@@ -251,6 +274,9 @@ public static class RunProgress
         PowerUpExplosiveLevel    = Mathf.Max(0, saveData.PowerUpExplosiveLevel);
         PowerUpPiercingBeamLevel = Mathf.Max(0, saveData.PowerUpPiercingBeamLevel);
 
+        PlayerLevel = Mathf.Max(1, saveData.PlayerLevel);
+        PlayerExp   = Mathf.Max(0, saveData.PlayerExp);
+
         GameEvents.RaiseDataPackChanged(DataPack);
         return true;
     }
@@ -276,7 +302,8 @@ public static class RunProgress
             StarterDamageLevel, StarterFireRateLevel, ServerArmorLevel, ExtraBulletsLevel,
             PowerUpCpuLevel, PowerUpRamLevel, PowerUpFirewallLevel,
             PowerUpDoubleShotLevel, PowerUpExplosiveLevel, PowerUpPiercingBeamLevel,
-            CheckpointStage);
+            CheckpointStage,
+            PlayerLevel, PlayerExp);
     }
 
     private static RunSaveData GetSaveData()
@@ -300,6 +327,11 @@ public static class RunProgress
 
     private static void ClearPowerUps()
     {
+        // Level/EXP mất cùng power-up: power-up sinh ra từ việc lên cấp, giữ level cao
+        // mà mất hết power-up sẽ khiến ngưỡng EXP quá nặng so với sức mạnh còn lại.
+        PlayerLevel = 1;
+        PlayerExp = 0;
+
         PowerUpCpuLevel = 0;
         PowerUpRamLevel = 0;
         PowerUpFirewallLevel = 0;

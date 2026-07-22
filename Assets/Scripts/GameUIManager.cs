@@ -120,30 +120,35 @@ public class GameUIManager : MonoBehaviour
 
     private void ShowGameCompleted()
     {
-        // Clear Stage 10 → thắng toàn bộ game!
-        // Xóa save để lần sau bắt đầu mới
-        RunProgress.ClearSavedRun();
-        UnityEngine.Debug.Log("[GameUIManager] GAME COMPLETED! Player cleared all 10 stages!");
+        // Chụp lại chỉ số TRƯỚC khi xoá save, vì ClearSavedRun() đưa Stage về 1.
+        // AdvanceStage() đã tăng Stage lên MaxStage + 1 nên trừ 1 để lấy stage vừa clear.
+        int stage = Mathf.Clamp(RunProgress.Stage - 1, 1, RunProgress.MaxStage);
+        int level = RunProgress.PlayerLevel;
+        int kills = RunStats.EnemiesKilled;
+        int score = RunStats.ComputeScore(stage, level, kills, RunProgress.DataPack);
 
-        // Hiện WinModal nếu có, fallback về winPanel
-        ShowScreen(winModalKey, winPanel);
+        RunProgress.ClearSavedRun();
+        Debug.Log($"[GameUIManager] GAME COMPLETED! Cleared all {RunProgress.MaxStage} stages - score {score}.");
+
+        // Đóng Shop đang mở trước (vào queue trước), rồi mới hiện màn chiến thắng.
+        CloseTopModal();
+        VictoryScreenUI.Show(stage, level, kills, score);
     }
 
     private void HandleGamePaused(bool isPaused)
     {
         if (isPaused)
         {
-            ShowScreen(pauseModalKey, pausePanel);
+            PauseMenuUI.Show();
+            return;
         }
-        else
+
+        PauseMenuUI.Hide();
+        OptionsPanelUI.Close();
+
+        if (pausePanel != null && pausePanel.activeSelf)
         {
-            // Close pause panel
-            if (pausePanel != null && pausePanel.activeSelf)
-            {
-                pausePanel.SetActive(false);
-            }
-            // If using Navigator, might need to close top modal if it's the pause modal
-            CloseTopModal();
+            pausePanel.SetActive(false);
         }
     }
 
